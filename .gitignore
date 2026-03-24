@@ -1,0 +1,31 @@
+HELP.md
+
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.vscode/
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+build/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Env / config (IMPORTANTE)
+.env
+application.properties
+application.yml
