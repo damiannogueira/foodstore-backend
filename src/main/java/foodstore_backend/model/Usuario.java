@@ -1,53 +1,8 @@
-/*package foodstore_backend.model;
-
-import foodstore_backend.model.enums.Rol;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-// Entidad que representa a un usuario en el sistema y se guarda en la base de datos
-@Entity
-@Table(name = "usuarios")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Usuario {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, length = 50)
-    private String nombre;
-
-    @Column(nullable = false, length = 50)
-    private String apellido;
-
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
-    @Column(nullable = false)
-    private String password;
-
-    @Enumerated(EnumType.STRING)
-    private Rol rol;
-
-    private Boolean activo = true;
-}
-    
-*/
-
-// CODIGO TEMPORAL SIN LOMBOK
 package foodstore_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import foodstore_backend.model.enums.Rol;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -78,6 +33,7 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @JsonIgnore
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(max = 255, message = "La contraseña no puede superar los 255 caracteres")
     @Column(nullable = false, length = 255)

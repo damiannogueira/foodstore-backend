@@ -42,4 +42,11 @@ public class GlobalExceptionHandler {
             errores.put(error.getField(), error.getDefaultMessage()));
         return new ResponseEntity<>(errores, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, String>> manejarStockInsuficiente(InsufficientStockException ex) {
+        Map<String, String> respuesta = new HashMap<>();
+        respuesta.put("mensaje", ex.getMessage());
+        return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+    }
 }

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 // Entidad que representa una línea o detalle dentro de un pedido
 @Entity
@@ -20,12 +21,12 @@ public class DetallePedido {
     @Column(nullable = false)
     private Integer cantidad;
 
-    @NotNull(message = "El subtotal es obligatorio")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
+    @JsonIgnoreProperties({"detalles", "usuario"})
     private Pedido pedido;
 
     @ManyToOne

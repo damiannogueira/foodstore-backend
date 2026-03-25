@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 // Entidad que representa un pedido realizado por un usuario
 @Entity
@@ -23,7 +24,6 @@ public class Pedido {
     private LocalDateTime fecha;
 
     // Total del pedido
-    @NotNull(message = "El total es obligatorio")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
@@ -35,6 +35,7 @@ public class Pedido {
     // Relación con usuario
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
+    @JsonIgnoreProperties({"password"})
     private Usuario usuario;
     
     // Lista de detalles del pedido
