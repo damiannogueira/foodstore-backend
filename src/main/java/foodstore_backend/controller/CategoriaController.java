@@ -1,9 +1,13 @@
 package foodstore_backend.controller;
 
-import foodstore_backend.model.Categoria;
+import foodstore_backend.dto.CategoriaCreateDTO;
+import foodstore_backend.dto.CategoriaEditDTO;
+import foodstore_backend.dto.CategoriaResponseDTO;
 import foodstore_backend.service.CategoriaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,33 +20,33 @@ public class CategoriaController {
     @Autowired
     private CategoriaService categoriaService;
 
-    // Obtener todas las categorías
     @GetMapping
-    public List<Categoria> listarCategorias() {
-        return categoriaService.listarCategorias();
+    public ResponseEntity<List<CategoriaResponseDTO>> listarCategorias() {
+        return ResponseEntity.ok(categoriaService.listarCategorias());
     }
 
-    // Obtener categoría por ID
     @GetMapping("/{id}")
-    public Categoria obtenerPorId(@PathVariable Long id) {
-        return categoriaService.buscarPorId(id);
+    public ResponseEntity<CategoriaResponseDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(categoriaService.obtenerPorId(id));
     }
 
-    // Crear categoría
     @PostMapping
-    public Categoria crearCategoria(@Valid @RequestBody Categoria categoria) {
-        return categoriaService.guardarCategoria(categoria);
+    public ResponseEntity<CategoriaResponseDTO> guardarCategoria(
+            @Valid @RequestBody CategoriaCreateDTO categoriaCreateDTO) {
+        CategoriaResponseDTO categoriaGuardada = categoriaService.guardarCategoria(categoriaCreateDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaGuardada);
     }
 
-    // Eliminar categoría
-    @DeleteMapping("/{id}")
-    public void eliminarCategoria(@PathVariable Long id) {
-        categoriaService.eliminarCategoria(id);
-    }
-
-    // Actualizar categoría
     @PutMapping("/{id}")
-    public Categoria actualizarCategoria(@PathVariable Long id, @Valid @RequestBody Categoria categoria) {
-        return categoriaService.actualizarCategoria(id, categoria);
+    public ResponseEntity<CategoriaResponseDTO> actualizarCategoria(
+            @PathVariable Long id,
+            @Valid @RequestBody CategoriaEditDTO categoriaEditDTO) {
+        return ResponseEntity.ok(categoriaService.actualizarCategoria(id, categoriaEditDTO));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarCategoria(@PathVariable Long id) {
+        categoriaService.eliminarCategoria(id);
+        return ResponseEntity.noContent().build();
     }
 }

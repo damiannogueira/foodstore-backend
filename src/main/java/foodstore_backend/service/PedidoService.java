@@ -1,13 +1,19 @@
 package foodstore_backend.service;
 
-import foodstore_backend.exception.ResourceNotFoundException;
+import foodstore_backend.dto.DetallePedidoResponseDTO;
+import foodstore_backend.dto.PedidoCreateDTO;
+import foodstore_backend.dto.PedidoDetalleCreateDTO;
+import foodstore_backend.dto.PedidoEditDTO;
+import foodstore_backend.dto.PedidoResponseDTO;
 import foodstore_backend.exception.InsufficientStockException;
+import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.DetallePedido;
 import foodstore_backend.model.Pedido;
 import foodstore_backend.model.Producto;
 import foodstore_backend.model.Usuario;
 import foodstore_backend.model.enums.EstadoPedido;
 import foodstore_backend.repository.PedidoRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,73 +34,125 @@ public class PedidoService {
     @Autowired
     private ProductoService productoService;
 
-    // Devuelve todos los pedidos
-    public List<Pedido> listarPedidos() {
-        return pedidoRepository.findAll();
+    public List<PedidoResponseDTO> listarPedidos() {
+        return pedidoRepository.findByEliminadoFalse()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    // Busca un pedido por ID o lanza excepción si no existe
     public Pedido buscarPorId(Long id) {
         return pedidoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
     }
 
-    // Guarda un pedido calculando total, subtotales, fecha y validando stock
-    public Pedido guardarPedido(Pedido pedido) {
+    public PedidoResponseDTO obtenerPorId(Long id) {
+        return toResponseDTO(buscarPorId(id));
+    }
 
-        Usuario usuario = usuarioService.buscarPorId(pedido.getUsuario().getId());
+    @Transactional
+    public PedidoResponseDTO guardarPedido(PedidoCreateDTO dto) {
+
+        Long usuarioId = dto.getUsuarioId();
+        Usuario usuario = usuarioService.buscarEntidadPorId(usuarioId);
+
+        Pedido pedido = new Pedido();
         pedido.setUsuario(usuario);
-
+        pedido.setFormaPago(dto.getFormaPago());
         pedido.setFecha(LocalDateTime.now());
         pedido.setEstado(EstadoPedido.PENDIENTE);
+        pedido.setEliminado(false);
 
         BigDecimal total = BigDecimal.ZERO;
 
-        for (DetallePedido detalle : pedido.getDetalles()) {
+        for (PedidoDetalleCreateDTO item : dto.getDetalles()) {
 
-            Producto producto = productoService.buscarPorId(detalle.getProducto().getId());
+            Long productoId = item.getProductoId();
+            Producto producto = productoService.buscarPorId(productoId);
 
-            if (producto.getStock() < detalle.getCantidad()) {
-                throw new InsufficientStockException("Stock insuficiente para el producto: " + producto.getNombre());
-}
+            if (producto.getStock() < item.getCantidad()) {
+                throw new InsufficientStockException(
+                        "Stock insuficiente para el producto: " + producto.getNombre()
+                );
+            }
+
             BigDecimal subtotal = producto.getPrecio()
-                    .multiply(BigDecimal.valueOf(detalle.getCantidad()));
+                    .multiply(BigDecimal.valueOf(item.getCantidad()));
 
+            DetallePedido detalle = new DetallePedido();
             detalle.setProducto(producto);
             detalle.setPedido(pedido);
+            detalle.setCantidad(item.getCantidad());
             detalle.setSubtotal(subtotal);
+            detalle.setEliminado(false);
 
-            producto.setStock(producto.getStock() - detalle.getCantidad());
+            pedido.getDetalles().add(detalle);
+
+            producto.setStock(producto.getStock() - item.getCantidad());
 
             total = total.add(subtotal);
         }
 
         pedido.setTotal(total);
 
-        return pedidoRepository.save(pedido);
+        Pedido guardado = pedidoRepository.save(pedido);
+        return toResponseDTO(guardado);
     }
 
-    // Elimina un pedido verificando que exista
+    @Transactional
+    public PedidoResponseDTO actualizarPedido(Long id, PedidoEditDTO dto) {
+        Pedido pedido = buscarPorId(id);
+
+        if (dto.getFormaPago() != null) {
+            pedido.setFormaPago(dto.getFormaPago());
+        }
+
+        return toResponseDTO(pedidoRepository.save(pedido));
+    }
+
+    @Transactional
     public void eliminarPedido(Long id) {
-        Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
-
-        pedidoRepository.delete(pedido);
+        Pedido pedido = buscarPorId(id);
+        pedido.setEliminado(true);
+        pedidoRepository.save(pedido);
     }
 
-    // Devuelve los pedidos de un usuario
-    public List<Pedido> listarPedidosPorUsuario(Long usuarioId) {
-        usuarioService.buscarPorId(usuarioId);
-        return pedidoRepository.findByUsuarioId(usuarioId);
+    public List<PedidoResponseDTO> listarPedidosPorUsuario(Long usuarioId) {
+        usuarioService.buscarEntidadPorId(usuarioId);
+        return pedidoRepository.findByUsuarioIdAndEliminadoFalse(usuarioId)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    // Actualiza el estado de un pedido existente
-    public Pedido actualizarEstado(Long id, EstadoPedido nuevoEstado) {
-        Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
-
+    @Transactional
+    public PedidoResponseDTO actualizarEstado(Long id, EstadoPedido nuevoEstado) {
+        Pedido pedido = buscarPorId(id);
         pedido.setEstado(nuevoEstado);
+        return toResponseDTO(pedidoRepository.save(pedido));
+    }
 
-        return pedidoRepository.save(pedido);
+    private PedidoResponseDTO toResponseDTO(Pedido pedido) {
+
+        List<DetallePedidoResponseDTO> detalles = pedido.getDetalles()
+                .stream()
+                .map(d -> new DetallePedidoResponseDTO(
+                        d.getProducto().getId(),
+                        d.getProducto().getNombre(),
+                        d.getCantidad(),
+                        d.getSubtotal()
+                ))
+                .toList();
+
+        return new PedidoResponseDTO(
+                pedido.getId(),
+                pedido.getUsuario().getId(),
+                pedido.getUsuario().getNombre() + " " + pedido.getUsuario().getApellido(),
+                pedido.getFecha(),
+                pedido.getEstado(),
+                pedido.getFormaPago(),
+                pedido.getTotal(),
+                detalles
+        );
     }
 }

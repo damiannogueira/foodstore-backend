@@ -1,10 +1,14 @@
 package foodstore_backend.controller;
 
-import foodstore_backend.model.Pedido;
-import foodstore_backend.service.PedidoService;
 import foodstore_backend.dto.EstadoPedidoDTO;
+import foodstore_backend.dto.PedidoCreateDTO;
+import foodstore_backend.dto.PedidoEditDTO;
+import foodstore_backend.dto.PedidoResponseDTO;
+import foodstore_backend.service.PedidoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,39 +21,48 @@ public class PedidoController {
     @Autowired
     private PedidoService pedidoService;
 
-    // Obtener todos los pedidos
     @GetMapping
-    public List<Pedido> listarPedidos() {
-        return pedidoService.listarPedidos();
+    public ResponseEntity<List<PedidoResponseDTO>> listarPedidos() {
+        return ResponseEntity.ok(pedidoService.listarPedidos());
     }
 
-    // Obtener pedido por ID
     @GetMapping("/{id}")
-    public Pedido obtenerPorId(@PathVariable Long id) {
-        return pedidoService.buscarPorId(id);
+    public ResponseEntity<PedidoResponseDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(pedidoService.obtenerPorId(id));
     }
 
-    // Obtener pedidos de un usuario
-    @GetMapping("/usuario/{usuarioId}")
-    public List<Pedido> listarPorUsuario(@PathVariable Long usuarioId) {
-        return pedidoService.listarPedidosPorUsuario(usuarioId);
-    }
-
-    // Crear pedido
     @PostMapping
-    public Pedido crearPedido(@Valid @RequestBody Pedido pedido) {
-        return pedidoService.guardarPedido(pedido);
+    public ResponseEntity<PedidoResponseDTO> guardarPedido(
+            @Valid @RequestBody PedidoCreateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(pedidoService.guardarPedido(dto));
     }
 
-    // Eliminar pedido
+    @PutMapping("/{id}")
+    public ResponseEntity<PedidoResponseDTO> actualizarPedido(
+            @PathVariable Long id,
+            @RequestBody PedidoEditDTO dto) {
+        return ResponseEntity.ok(pedidoService.actualizarPedido(id, dto));
+    }
+
     @DeleteMapping("/{id}")
-    public void eliminarPedido(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarPedido(@PathVariable Long id) {
         pedidoService.eliminarPedido(id);
+        return ResponseEntity.noContent().build();
     }
 
-    // Actualizar estado de un pedido
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<List<PedidoResponseDTO>> listarPedidosPorUsuario(
+            @PathVariable Long usuarioId) {
+        return ResponseEntity.ok(pedidoService.listarPedidosPorUsuario(usuarioId));
+    }
+
     @PutMapping("/{id}/estado")
-    public Pedido actualizarEstado(@PathVariable Long id, @Valid @RequestBody EstadoPedidoDTO estadoPedidoDTO) {
-        return pedidoService.actualizarEstado(id, estadoPedidoDTO.getEstado());
+    public ResponseEntity<PedidoResponseDTO> actualizarEstado(
+            @PathVariable Long id,
+            @Valid @RequestBody EstadoPedidoDTO dto) {
+        return ResponseEntity.ok(
+                pedidoService.actualizarEstado(id, dto.getEstado())
+        );
     }
 }

@@ -1,96 +1,83 @@
 package foodstore_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import foodstore_backend.model.enums.EstadoPedido;
+import foodstore_backend.model.enums.FormaPago;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 // Entidad que representa un pedido realizado por un usuario
 @Entity
 @Table(name = "pedidos")
-public class Pedido {
+public class Pedido extends Base {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @ManyToOne
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
 
-    // Fecha y hora del pedido
     @Column(nullable = false)
     private LocalDateTime fecha;
 
-    // Total del pedido
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal total;
-
-    // Estado del pedido
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoPedido estado;
 
-    // Relación con usuario
-    @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
-    @JsonIgnoreProperties({"password"})
-    private Usuario usuario;
-    
-    // Lista de detalles del pedido
+    @Enumerated(EnumType.STRING)
+    @Column(name = "forma_pago", nullable = false)
+    private FormaPago formaPago;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal total;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<DetallePedido> detalles = new ArrayList<>();
 
     public Pedido() {
-    }
-
-    public Pedido(Long id, LocalDateTime fecha, BigDecimal total, EstadoPedido estado, Usuario usuario) {
-        this.id = id;
-        this.fecha = fecha;
-        this.total = total;
-        this.estado = estado;
-        this.usuario = usuario;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public LocalDateTime getFecha() {
-        return fecha;
-    }
-
-    public BigDecimal getTotal() {
-        return total;
-    }
-
-    public EstadoPedido getEstado() {
-        return estado;
     }
 
     public Usuario getUsuario() {
         return usuario;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
+
+    public LocalDateTime getFecha() {
+        return fecha;
     }
 
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
     }
 
-    public void setTotal(BigDecimal total) {
-        this.total = total;
+    public EstadoPedido getEstado() {
+        return estado;
     }
 
     public void setEstado(EstadoPedido estado) {
         this.estado = estado;
     }
 
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
+    public FormaPago getFormaPago() {
+        return formaPago;
+    }
+
+    public void setFormaPago(FormaPago formaPago) {
+        this.formaPago = formaPago;
+    }
+
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
     }
 
     public List<DetallePedido> getDetalles() {

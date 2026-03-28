@@ -7,11 +7,7 @@ import java.math.BigDecimal;
 // Entidad que representa un producto de la tienda
 @Entity
 @Table(name = "productos")
-public class Producto {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Producto extends Base {
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
@@ -41,16 +37,11 @@ public class Producto {
     }
 
     public Producto(Long id, String nombre, String descripcion, BigDecimal precio, Integer stock, Categoria categoria) {
-        this.id = id;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.precio = precio;
         this.stock = stock;
         this.categoria = categoria;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getNombre() {
@@ -71,10 +62,6 @@ public class Producto {
 
     public Categoria getCategoria() {
         return categoria;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public void setNombre(String nombre) {

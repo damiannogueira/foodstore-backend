@@ -1,52 +1,30 @@
-package foodstore_backend.model;
+package foodstore_backend.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import foodstore_backend.model.enums.Rol;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-// Entidad que representa a un usuario
-@Entity
-@Table(name = "usuarios")
-public class Usuario extends Base {
+// DTO para registrar usuarios
+public class UsuarioCreateDTO {
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
-    @Column(nullable = false, length = 100)
     private String nombre;
 
     @NotBlank(message = "El apellido es obligatorio")
     @Size(max = 100, message = "El apellido no puede superar los 100 caracteres")
-    @Column(nullable = false, length = 100)
     private String apellido;
 
     @NotBlank(message = "El email es obligatorio")
     @Email(message = "El email debe tener un formato válido")
-    @Column(nullable = false, unique = true, length = 150)
+    @Size(max = 150, message = "El email no puede superar los 150 caracteres")
     private String email;
 
     @NotBlank(message = "La contraseña es obligatoria")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(nullable = false)
+    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
     private String password;
 
-    @NotNull(message = "El rol es obligatorio")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Rol rol;
-
-    public Usuario() {
-    }
-
-    public Usuario(String nombre, String apellido, String email, String password, Rol rol) {
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.email = email;
-        this.password = password;
-        this.rol = rol;
+    public UsuarioCreateDTO() {
     }
 
     public String getNombre() {
@@ -79,13 +57,5 @@ public class Usuario extends Base {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public Rol getRol() {
-        return rol;
-    }
-
-    public void setRol(Rol rol) {
-        this.rol = rol;
     }
 }

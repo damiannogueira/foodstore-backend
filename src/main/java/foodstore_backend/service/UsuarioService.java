@@ -1,10 +1,14 @@
 package foodstore_backend.service;
 
+import foodstore_backend.dto.UsuarioCreateDTO;
+import foodstore_backend.dto.UsuarioResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
 import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Usuario;
+import foodstore_backend.model.enums.Rol;
 import foodstore_backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,46 +20,65 @@ public class UsuarioService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // Devuelve todos los usuarios
-    public List<Usuario> listarUsuarios() {
-        return usuarioRepository.findAll();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public List<UsuarioResponseDTO> listarUsuarios() {
+        return usuarioRepository.findByEliminadoFalse()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    // Busca un usuario por ID o lanza excepción si no existe
-    public Usuario buscarPorId(Long id) {
+    public UsuarioResponseDTO obtenerPorId(Long id) {
+        return toResponseDTO(buscarEntidadPorId(id));
+    }
+
+    public Usuario buscarEntidadPorId(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
     }
 
-    // Busca usuario por email
-    public Usuario buscarPorEmail(String email) {
+    public Usuario buscarEntidadPorEmail(String email) {
         return usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
     }
 
-    // Guarda un usuario validando email duplicado
-    public Usuario guardarUsuario(Usuario usuario) {
+    public UsuarioResponseDTO registrarUsuario(UsuarioCreateDTO usuarioCreateDTO) {
 
-        // Validar email duplicado
-        usuarioRepository.findByEmail(usuario.getEmail())
+        usuarioRepository.findByEmail(usuarioCreateDTO.getEmail())
                 .ifPresent(u -> {
-                    throw new DuplicateResourceException("El email ya está registrado");
+                    throw new DuplicateResourceException(
+                            "Ya existe un usuario con el email: " + usuarioCreateDTO.getEmail()
+                    );
                 });
 
-        // Setear activo si viene null
-        if (usuario.getActivo() == null) {
-            usuario.setActivo(true);
-        }
+        Usuario usuario = new Usuario();
+        usuario.setNombre(usuarioCreateDTO.getNombre());
+        usuario.setApellido(usuarioCreateDTO.getApellido());
+        usuario.setEmail(usuarioCreateDTO.getEmail());
+        usuario.setPassword(passwordEncoder.encode(usuarioCreateDTO.getPassword()));
+        usuario.setRol(Rol.USUARIO);
+        usuario.setEliminado(false);
 
-        return usuarioRepository.save(usuario);
+        Usuario usuarioGuardado = usuarioRepository.save(usuario);
+
+        return toResponseDTO(usuarioGuardado);
     }
 
-    // Elimina usuario verificando que exista
     public void eliminarUsuario(Long id) {
+        Usuario usuario = buscarEntidadPorId(id);
+        usuario.setEliminado(true);
+        usuarioRepository.save(usuario);
+    }
 
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
-
-        usuarioRepository.delete(usuario);
+    private UsuarioResponseDTO toResponseDTO(Usuario usuario) {
+        return new UsuarioResponseDTO(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getApellido(),
+                usuario.getEmail(),
+                usuario.getRol()
+        );
     }
 }

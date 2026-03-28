@@ -1,12 +1,15 @@
 package foodstore_backend.controller;
 
-import foodstore_backend.model.Usuario;
+import foodstore_backend.dto.UsuarioCreateDTO;
+import foodstore_backend.dto.UsuarioResponseDTO;
 import foodstore_backend.service.UsuarioService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Optional;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 // Controlador que expone endpoints para manejar usuarios
 @RestController
@@ -16,27 +19,25 @@ public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;
 
-    // Obtener todos los usuarios
     @GetMapping
-    public List<Usuario> listarUsuarios() {
-        return usuarioService.listarUsuarios();
+    public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios() {
+        return ResponseEntity.ok(usuarioService.listarUsuarios());
     }
 
-    // Obtener usuario por ID
     @GetMapping("/{id}")
-    public Usuario obtenerPorId(@PathVariable Long id) {
-        return usuarioService.buscarPorId(id);
+    public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.obtenerPorId(id));
     }
 
-    // Crear usuario
     @PostMapping
-    public Usuario crearUsuario(@Valid @RequestBody Usuario usuario) {
-        return usuarioService.guardarUsuario(usuario);
+    public ResponseEntity<UsuarioResponseDTO> crearUsuario(@Valid @RequestBody UsuarioCreateDTO usuarioCreateDTO) {
+        UsuarioResponseDTO usuarioCreado = usuarioService.registrarUsuario(usuarioCreateDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioCreado);
     }
 
-    // Eliminar usuario
     @DeleteMapping("/{id}")
-    public void eliminarUsuario(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
         usuarioService.eliminarUsuario(id);
+        return ResponseEntity.noContent().build();
     }
 }

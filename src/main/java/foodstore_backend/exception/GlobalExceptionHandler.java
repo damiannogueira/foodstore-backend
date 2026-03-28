@@ -2,51 +2,89 @@ package foodstore_backend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.LinkedHashMap;
 
-// Manejador global de excepciones para devolver mensajes claros en la API
+// Manejador global de excepciones
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // DTO interno para respuestas de error
+    private Map<String, Object> buildResponse(HttpStatus status, String mensaje) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", status.value());
+        response.put("error", status.getReasonPhrase());
+        response.put("message", mensaje);
+        return response;
+    }
+
+    // Error de recurso no encontrado (404)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, String>> manejarRecursoNoEncontrado(ResourceNotFoundException ex) {
-        Map<String, String> respuesta = new HashMap<>();
-        respuesta.put("mensaje", ex.getMessage());
-        return new ResponseEntity<>(respuesta, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
+        return new ResponseEntity<>(
+                buildResponse(HttpStatus.NOT_FOUND, ex.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
     }
 
+    // Error de recurso duplicado (400)
     @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<Map<String, String>> manejarRecursoDuplicado(DuplicateResourceException ex) {
-        Map<String, String> respuesta = new HashMap<>();
-        respuesta.put("mensaje", ex.getMessage());
-        return new ResponseEntity<>(respuesta, HttpStatus.CONFLICT);
+    public ResponseEntity<Map<String, Object>> handleDuplicate(DuplicateResourceException ex) {
+        return new ResponseEntity<>(
+                buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage()),
+                HttpStatus.BAD_REQUEST
+        );
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> manejarErrorGeneral(Exception ex) {
-        Map<String, String> respuesta = new HashMap<>();
-        respuesta.put("mensaje", "Ocurrió un error interno en el servidor");
-        return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> manejarErroresDeValidacion(MethodArgumentNotValidException ex) {
-        Map<String, String> errores = new LinkedHashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-            errores.put(error.getField(), error.getDefaultMessage()));
-        return new ResponseEntity<>(errores, HttpStatus.BAD_REQUEST);
-    }
-
+    // Error de stock insuficiente (400)
     @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<Map<String, String>> manejarStockInsuficiente(InsufficientStockException ex) {
-        Map<String, String> respuesta = new HashMap<>();
-        respuesta.put("mensaje", ex.getMessage());
-        return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Map<String, Object>> handleStock(InsufficientStockException ex) {
+        return new ResponseEntity<>(
+                buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage()),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    // 🔥 ESTE ES EL QUE TE FALTABA
+    // Error de credenciales inválidas (400)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        return new ResponseEntity<>(
+                buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage()),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    // Error de validación de DTOs (400)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+
+        Map<String, String> errores = new HashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errores.put(error.getField(), error.getDefaultMessage())
+        );
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Validation Error");
+        response.put("errors", errores);
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    // Error genérico (500)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        return new ResponseEntity<>(
+                buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 }

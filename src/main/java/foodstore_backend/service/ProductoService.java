@@ -1,7 +1,12 @@
 package foodstore_backend.service;
 
+import foodstore_backend.dto.CategoriaResponseDTO;
+import foodstore_backend.dto.ProductoCreateDTO;
+import foodstore_backend.dto.ProductoEditDTO;
+import foodstore_backend.dto.ProductoResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
 import foodstore_backend.exception.ResourceNotFoundException;
+import foodstore_backend.model.Categoria;
 import foodstore_backend.model.Producto;
 import foodstore_backend.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,59 +24,114 @@ public class ProductoService {
     @Autowired
     private CategoriaService categoriaService;
 
-    // Devuelve todos los productos
-    public List<Producto> listarProductos() {
-        return productoRepository.findAll();
+    public List<ProductoResponseDTO> listarProductos() {
+        return productoRepository.findByEliminadoFalse()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    // Busca un producto por ID o lanza excepción si no existe
+    public ProductoResponseDTO obtenerPorId(Long id) {
+        return toResponseDTO(buscarPorId(id));
+    }
+
     public Producto buscarPorId(Long id) {
         return productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
     }
 
-    // Guarda un producto validando nombre duplicado y categoría existente
-    public Producto guardarProducto(Producto producto) {
+    public ProductoResponseDTO guardarProducto(ProductoCreateDTO productoCreateDTO) {
 
-        productoRepository.findByNombre(producto.getNombre())
+        productoRepository.findByNombre(productoCreateDTO.getNombre())
                 .ifPresent(p -> {
-                    throw new DuplicateResourceException("El producto ya existe");
+                    throw new DuplicateResourceException(
+                            "El producto ya existe con nombre: " + productoCreateDTO.getNombre()
+                    );
                 });
 
-        Long categoriaId = producto.getCategoria().getId();
-        producto.setCategoria(categoriaService.buscarPorId(categoriaId));
+        Long categoriaId = productoCreateDTO.getCategoriaId();
+        Categoria categoria = categoriaService.buscarPorId(categoriaId);
 
-        return productoRepository.save(producto);
+        Producto producto = new Producto();
+        producto.setNombre(productoCreateDTO.getNombre());
+        producto.setDescripcion(productoCreateDTO.getDescripcion());
+        producto.setPrecio(productoCreateDTO.getPrecio());
+        producto.setStock(productoCreateDTO.getStock());
+        producto.setCategoria(categoria);
+        producto.setEliminado(false);
+
+        Producto productoGuardado = productoRepository.save(producto);
+        return toResponseDTO(productoGuardado);
     }
 
-    // Elimina un producto verificando que exista
+    public ProductoResponseDTO actualizarProducto(Long id, ProductoEditDTO productoEditDTO) {
+        Producto producto = buscarPorId(id);
+
+        String nuevoNombre = productoEditDTO.getNombre();
+        if (nuevoNombre != null && !nuevoNombre.equalsIgnoreCase(producto.getNombre())) {
+            productoRepository.findByNombre(nuevoNombre)
+                    .ifPresent(p -> {
+                        throw new DuplicateResourceException(
+                                "El producto ya existe con nombre: " + nuevoNombre
+                        );
+                    });
+            producto.setNombre(nuevoNombre);
+        }
+
+        String nuevaDescripcion = productoEditDTO.getDescripcion();
+        if (nuevaDescripcion != null) {
+            producto.setDescripcion(nuevaDescripcion);
+        }
+
+        if (productoEditDTO.getPrecio() != null) {
+            producto.setPrecio(productoEditDTO.getPrecio());
+        }
+
+        if (productoEditDTO.getStock() != null) {
+            producto.setStock(productoEditDTO.getStock());
+        }
+
+        Long categoriaId = productoEditDTO.getCategoriaId();
+        if (categoriaId != null) {
+            Categoria categoria = categoriaService.buscarPorId(categoriaId);
+            producto.setCategoria(categoria);
+        }
+
+        Producto productoGuardado = productoRepository.save(producto);
+        return toResponseDTO(productoGuardado);
+    }
+
     public void eliminarProducto(Long id) {
-        Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
-
-        productoRepository.delete(producto);
+        Producto producto = buscarPorId(id);
+        producto.setEliminado(true);
+        productoRepository.save(producto);
     }
 
-    // Actualiza un producto existente
-    public Producto actualizarProducto(Long id, Producto productoActualizado) {
-        Producto productoExistente = productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
+    public List<ProductoResponseDTO> listarProductosPorCategoria(Long categoriaId) {
+        categoriaService.buscarPorId(categoriaId);
 
-        productoRepository.findByNombre(productoActualizado.getNombre())
-                .ifPresent(p -> {
-                    if (!p.getId().equals(id)) {
-                        throw new DuplicateResourceException("El producto ya existe");
-                    }
-                });
+        return productoRepository.findByCategoriaIdAndEliminadoFalse(categoriaId)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
 
-        Long categoriaId = productoActualizado.getCategoria().getId();
-        productoExistente.setCategoria(categoriaService.buscarPorId(categoriaId));
+    private ProductoResponseDTO toResponseDTO(Producto producto) {
+        Categoria categoria = producto.getCategoria();
 
-        productoExistente.setNombre(productoActualizado.getNombre());
-        productoExistente.setDescripcion(productoActualizado.getDescripcion());
-        productoExistente.setPrecio(productoActualizado.getPrecio());
-        productoExistente.setStock(productoActualizado.getStock());
+        CategoriaResponseDTO categoriaDTO = new CategoriaResponseDTO(
+                categoria.getId(),
+                categoria.getNombre(),
+                categoria.getDescripcion()
+        );
 
-        return productoRepository.save(productoExistente);
+        return new ProductoResponseDTO(
+                producto.getId(),
+                producto.getNombre(),
+                producto.getDescripcion(),
+                producto.getPrecio(),
+                producto.getStock(),
+                categoriaDTO
+        );
     }
 }

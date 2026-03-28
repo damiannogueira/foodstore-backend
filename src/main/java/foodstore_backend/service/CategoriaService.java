@@ -1,5 +1,8 @@
 package foodstore_backend.service;
 
+import foodstore_backend.dto.CategoriaCreateDTO;
+import foodstore_backend.dto.CategoriaEditDTO;
+import foodstore_backend.dto.CategoriaResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
 import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Categoria;
@@ -16,51 +19,74 @@ public class CategoriaService {
     @Autowired
     private CategoriaRepository categoriaRepository;
 
-    // Devuelve todas las categorías
-    public List<Categoria> listarCategorias() {
-        return categoriaRepository.findAll();
+    public List<CategoriaResponseDTO> listarCategorias() {
+        return categoriaRepository.findByEliminadoFalse()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    // Busca una categoría por ID o lanza excepción si no existe
+    public CategoriaResponseDTO obtenerPorId(Long id) {
+        return toResponseDTO(buscarPorId(id));
+    }
+
     public Categoria buscarPorId(Long id) {
         return categoriaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + id));
     }
 
-    // Guarda una categoría validando nombre duplicado
-    public Categoria guardarCategoria(Categoria categoria) {
-        categoriaRepository.findByNombre(categoria.getNombre())
+    public CategoriaResponseDTO guardarCategoria(CategoriaCreateDTO categoriaCreateDTO) {
+
+        categoriaRepository.findByNombre(categoriaCreateDTO.getNombre())
                 .ifPresent(c -> {
-                    throw new DuplicateResourceException("La categoría ya existe");
+                    throw new DuplicateResourceException(
+                            "La categoría ya existe con nombre: " + categoriaCreateDTO.getNombre()
+                    );
                 });
 
-        return categoriaRepository.save(categoria);
+        Categoria categoria = new Categoria();
+        categoria.setNombre(categoriaCreateDTO.getNombre());
+        categoria.setDescripcion(categoriaCreateDTO.getDescripcion());
+        categoria.setEliminado(false);
+
+        Categoria categoriaGuardada = categoriaRepository.save(categoria);
+        return toResponseDTO(categoriaGuardada);
     }
 
-    // Elimina una categoría verificando que exista
+    public CategoriaResponseDTO actualizarCategoria(Long id, CategoriaEditDTO categoriaEditDTO) {
+        Categoria categoria = buscarPorId(id);
+
+        String nuevoNombre = categoriaEditDTO.getNombre();
+        if (nuevoNombre != null && !nuevoNombre.equalsIgnoreCase(categoria.getNombre())) {
+            categoriaRepository.findByNombre(nuevoNombre)
+                    .ifPresent(c -> {
+                        throw new DuplicateResourceException(
+                                "La categoría ya existe con nombre: " + nuevoNombre
+                        );
+                    });
+            categoria.setNombre(nuevoNombre);
+        }
+
+        String nuevaDescripcion = categoriaEditDTO.getDescripcion();
+        if (nuevaDescripcion != null) {
+            categoria.setDescripcion(nuevaDescripcion);
+        }
+
+        Categoria categoriaGuardada = categoriaRepository.save(categoria);
+        return toResponseDTO(categoriaGuardada);
+    }
+
     public void eliminarCategoria(Long id) {
-        Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + id));
-
-        categoriaRepository.delete(categoria);
+        Categoria categoria = buscarPorId(id);
+        categoria.setEliminado(true);
+        categoriaRepository.save(categoria);
     }
 
-    // Actualiza una categoría existente
-    public Categoria actualizarCategoria(Long id, Categoria categoriaActualizada) {
-
-        Categoria categoriaExistente = categoriaRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + id));
-
-        categoriaRepository.findByNombre(categoriaActualizada.getNombre())
-            .ifPresent(c -> {
-                if (!c.getId().equals(id)) {
-                    throw new DuplicateResourceException("La categoría ya existe");
-                }
-            });
-
-        categoriaExistente.setNombre(categoriaActualizada.getNombre());
-        categoriaExistente.setDescripcion(categoriaActualizada.getDescripcion());
-
-        return categoriaRepository.save(categoriaExistente);
+    private CategoriaResponseDTO toResponseDTO(Categoria categoria) {
+        return new CategoriaResponseDTO(
+                categoria.getId(),
+                categoria.getNombre(),
+                categoria.getDescripcion()
+        );
     }
 }
