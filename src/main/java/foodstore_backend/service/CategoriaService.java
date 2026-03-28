@@ -35,6 +35,7 @@ public class CategoriaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con id: " + id));
     }
 
+    // Guarda una categoría validando nombre duplicado
     public CategoriaResponseDTO guardarCategoria(CategoriaCreateDTO categoriaCreateDTO) {
 
         categoriaRepository.findByNombre(categoriaCreateDTO.getNombre())
@@ -53,6 +54,7 @@ public class CategoriaService {
         return toResponseDTO(categoriaGuardada);
     }
 
+    // Actualiza solo los campos enviados, sin modificar los nulos
     public CategoriaResponseDTO actualizarCategoria(Long id, CategoriaEditDTO categoriaEditDTO) {
         Categoria categoria = buscarPorId(id);
 
@@ -76,6 +78,7 @@ public class CategoriaService {
         return toResponseDTO(categoriaGuardada);
     }
 
+    // Realiza baja lógica de la categoría
     public void eliminarCategoria(Long id) {
         Categoria categoria = buscarPorId(id);
         categoria.setEliminado(true);

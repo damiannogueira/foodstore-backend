@@ -40,6 +40,7 @@ public class ProductoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
     }
 
+    // Guarda un producto validando nombre duplicado y existencia de categoría
     public ProductoResponseDTO guardarProducto(ProductoCreateDTO productoCreateDTO) {
 
         productoRepository.findByNombre(productoCreateDTO.getNombre())
@@ -64,6 +65,7 @@ public class ProductoService {
         return toResponseDTO(productoGuardado);
     }
 
+    // Realiza baja lógica sin eliminar físicamente el usuario
     public ProductoResponseDTO actualizarProducto(Long id, ProductoEditDTO productoEditDTO) {
         Producto producto = buscarPorId(id);
 
@@ -101,6 +103,7 @@ public class ProductoService {
         return toResponseDTO(productoGuardado);
     }
 
+    // Realiza baja lógica sin eliminar físicamente el registro
     public void eliminarProducto(Long id) {
         Producto producto = buscarPorId(id);
         producto.setEliminado(true);

@@ -44,6 +44,7 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
     }
 
+    // Registra un usuario nuevo con mail único y contraseña hasheada
     public UsuarioResponseDTO registrarUsuario(UsuarioCreateDTO usuarioCreateDTO) {
 
         usuarioRepository.findByEmail(usuarioCreateDTO.getEmail())
@@ -66,6 +67,7 @@ public class UsuarioService {
         return toResponseDTO(usuarioGuardado);
     }
 
+    // Realiza baja lógica sin eliminar físicamente el usuario
     public void eliminarUsuario(Long id) {
         Usuario usuario = buscarEntidadPorId(id);
         usuario.setEliminado(true);

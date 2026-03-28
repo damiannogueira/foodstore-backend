@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 // DTO para editar productos
 public class ProductoEditDTO {
 
-    @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
+    @Size(min = 2, max = 100, message = "El nombre debe tener entre 2 y 100 caracteres")
     private String nombre;
 
     @Size(max = 255, message = "La descripción no puede superar los 255 caracteres")

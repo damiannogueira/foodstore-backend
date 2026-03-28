@@ -1,6 +1,7 @@
 package foodstore_backend.dto;
 
 import foodstore_backend.model.enums.FormaPago;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -15,6 +16,7 @@ public class PedidoCreateDTO {
     @NotNull(message = "La forma de pago es obligatoria")
     private FormaPago formaPago;
 
+    @Valid
     @NotEmpty(message = "El pedido debe tener al menos un detalle")
     private List<PedidoDetalleCreateDTO> detalles;
 
@@ -45,3 +47,4 @@ public class PedidoCreateDTO {
         this.detalles = detalles;
     }
 }
+

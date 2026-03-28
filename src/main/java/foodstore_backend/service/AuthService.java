@@ -18,6 +18,7 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    // Valida credenciales de acceso y devuelve los datos del usuario autenticado
     public LoginResponseDTO login(LoginRequestDTO dto) {
 
         Usuario usuario = usuarioService.buscarEntidadPorEmail(dto.getEmail());
