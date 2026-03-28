@@ -14,6 +14,8 @@ Permite administrar usuarios, categorías, productos y pedidos, incluyendo lógi
 * Hibernate
 * MySQL
 * Maven
+* Swagger / OpenAPI
+* BCrypt (Spring Security Crypto)
 
 ---
 
@@ -22,8 +24,10 @@ Permite administrar usuarios, categorías, productos y pedidos, incluyendo lógi
 ### 👤 Usuarios
 
 * Crear usuarios
+* Login de usuarios
 * Validación de datos
 * Email único
+* Contraseña encriptada con BCrypt
 * Ocultamiento de contraseña en respuestas
 
 ### 📂 Categorías
@@ -54,7 +58,7 @@ Permite administrar usuarios, categorías, productos y pedidos, incluyendo lógi
   * CONFIRMADO
   * CANCELADO
   * ENTREGADO
-* Actualización de estado
+* Actualización de estado y forma de pago
 * Listado de pedidos
 * Listado por usuario
 
@@ -66,7 +70,7 @@ Permite administrar usuarios, categorías, productos y pedidos, incluyendo lógi
 * Manejo de errores personalizados:
 
   * Recurso no encontrado (404)
-  * Duplicados (409)
+  * Duplicados (400)
   * Validaciones (400)
   * Stock insuficiente (400)
 * Relaciones JPA:
@@ -88,7 +92,8 @@ src/
     │   ├── repository/        # Acceso a datos con Spring Data JPA
     │   ├── model/             # Entidades JPA
     │   │   └── enums/         # Enumeraciones (Rol, EstadoPedido)
-    │   ├── dto/               # Objetos de transferencia de datos (EstadoPedidoDTO)
+    │   ├── config/            # Configuración (Swagger, PasswordEncoder)
+    │   ├── dto/               # DTOs (Usuario, Producto, Categoria, Pedido, Auth)
     │   ├── exception/         # Manejo de excepciones personalizadas
     │   └── FoodstoreBackendApplication.java
     │
@@ -106,15 +111,12 @@ pom.xml                        # Configuración del proyecto
 
 ```json
 {
-  "usuario": {
-    "id": 1
-  },
+  "usuarioId": 1,
+  "formaPago": "EFECTIVO",
   "detalles": [
     {
-      "cantidad": 2,
-      "producto": {
-        "id": 1
-      }
+      "productoId": 1,
+      "cantidad": 2
     }
   ]
 }
@@ -160,16 +162,31 @@ http://localhost:8080
 
 ---
 
+## 📄 Documentación API (Swagger)
+
+Disponible en:
+
+http://localhost:8080/swagger-ui/index.html
+
+---
+
 ## 🧪 Endpoints principales
 
 ### Usuarios
 
 * GET /usuarios
+* GET /usuarios/{id}
 * POST /usuarios
+* DELETE /usuarios/{id}
+
+### Auth
+
+* POST /auth/login
 
 ### Categorías
 
 * GET /categorias
+* GET /categorias/{id}
 * POST /categorias
 * PUT /categorias/{id}
 * DELETE /categorias/{id}
@@ -177,6 +194,8 @@ http://localhost:8080
 ### Productos
 
 * GET /productos
+* GET /productos/{id}
+* GET /productos/categoria/{categoriaId}
 * POST /productos
 * PUT /productos/{id}
 * DELETE /productos/{id}
@@ -187,6 +206,7 @@ http://localhost:8080
 * GET /pedidos/{id}
 * GET /pedidos/usuario/{usuarioId}
 * POST /pedidos
+* PUT /pedidos/{id}
 * PUT /pedidos/{id}/estado
 * DELETE /pedidos/{id}
 
@@ -194,7 +214,7 @@ http://localhost:8080
 
 ## 📈 Estado del proyecto
 
-Proyecto académico en desarrollo para la materia Programación 3 de la Tecnicatura en Programación
+Backend académico funcional y completo para el alcance del TPI de la materia Programación 3 de la Tecnicatura en Programación
 a Distancia de la UTN.
 
 Incluye implementación completa de backend con buenas prácticas, validaciones y lógica de negocio.
@@ -207,8 +227,10 @@ No está destinado a uso productivo.
 
 ## 👨‍💻 Autor
 
-Damián Nogueira
-Técnico Superior en Programación
+Damián Nogueira.
+
+Técnico Superior en Programación.
+
 Estudiante TUPaD - UTN
 
 ---
