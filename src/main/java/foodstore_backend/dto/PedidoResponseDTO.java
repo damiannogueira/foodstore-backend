@@ -7,31 +7,38 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// DTO de respuesta para pedidos
+// DTO de respuesta para devolver un pedido con sus detalles
 public class PedidoResponseDTO {
 
     private Long id;
     private Long usuarioId;
-    private String nombreUsuario;
+    private String nombreCliente;
     private LocalDateTime fecha;
     private EstadoPedido estado;
     private FormaPago formaPago;
     private BigDecimal total;
+    private String telefono;
+    private String direccionEntrega;
+    private String notas;
     private List<DetallePedidoResponseDTO> detalles;
 
     public PedidoResponseDTO() {
     }
 
-    public PedidoResponseDTO(Long id, Long usuarioId, String nombreUsuario, LocalDateTime fecha,
+    public PedidoResponseDTO(Long id, Long usuarioId, String nombreCliente, LocalDateTime fecha,
                              EstadoPedido estado, FormaPago formaPago, BigDecimal total,
+                             String telefono, String direccionEntrega, String notas,
                              List<DetallePedidoResponseDTO> detalles) {
         this.id = id;
         this.usuarioId = usuarioId;
-        this.nombreUsuario = nombreUsuario;
+        this.nombreCliente = nombreCliente;
         this.fecha = fecha;
         this.estado = estado;
         this.formaPago = formaPago;
         this.total = total;
+        this.telefono = telefono;
+        this.direccionEntrega = direccionEntrega;
+        this.notas = notas;
         this.detalles = detalles;
     }
 
@@ -43,8 +50,8 @@ public class PedidoResponseDTO {
         return usuarioId;
     }
 
-    public String getNombreUsuario() {
-        return nombreUsuario;
+    public String getNombreCliente() {
+        return nombreCliente;
     }
 
     public LocalDateTime getFecha() {
@@ -63,6 +70,18 @@ public class PedidoResponseDTO {
         return total;
     }
 
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public String getDireccionEntrega() {
+        return direccionEntrega;
+    }
+
+    public String getNotas() {
+        return notas;
+    }
+
     public List<DetallePedidoResponseDTO> getDetalles() {
         return detalles;
     }
@@ -75,8 +94,8 @@ public class PedidoResponseDTO {
         this.usuarioId = usuarioId;
     }
 
-    public void setNombreUsuario(String nombreUsuario) {
-        this.nombreUsuario = nombreUsuario;
+    public void setNombreCliente(String nombreCliente) {
+        this.nombreCliente = nombreCliente;
     }
 
     public void setFecha(LocalDateTime fecha) {
@@ -93,6 +112,18 @@ public class PedidoResponseDTO {
 
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
+    public void setDireccionEntrega(String direccionEntrega) {
+        this.direccionEntrega = direccionEntrega;
+    }
+
+    public void setNotas(String notas) {
+        this.notas = notas;
     }
 
     public void setDetalles(List<DetallePedidoResponseDTO> detalles) {

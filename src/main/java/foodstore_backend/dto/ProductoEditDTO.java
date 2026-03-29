@@ -6,13 +6,13 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
-// DTO para editar productos
+// DTO para editar un producto existente
 public class ProductoEditDTO {
 
     @Size(min = 2, max = 100, message = "El nombre debe tener entre 2 y 100 caracteres")
     private String nombre;
 
-    @Size(max = 255, message = "La descripción no puede superar los 255 caracteres")
+    @Size(max = 500, message = "La descripción no puede exceder 500 caracteres")
     private String descripcion;
 
     @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0")
@@ -20,6 +20,11 @@ public class ProductoEditDTO {
 
     @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stock;
+
+    @Size(max = 1000, message = "La URL de imagen no puede exceder 1000 caracteres")
+    private String imagen;
+
+    private Boolean disponible;
 
     private Long categoriaId;
 
@@ -56,6 +61,22 @@ public class ProductoEditDTO {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+
+    public String getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
+    }
+
+    public Boolean getDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(Boolean disponible) {
+        this.disponible = disponible;
     }
 
     public Long getCategoriaId() {

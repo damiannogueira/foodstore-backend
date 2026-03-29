@@ -1,27 +1,32 @@
 package foodstore_backend.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-// Entidad que representa una línea de detalle dentro de un pedido
+// Entidad que representa una línea o detalle dentro de un pedido
 @Entity
 @Table(name = "detalle_pedido")
 public class DetallePedido extends Base {
 
-    @ManyToOne
+    @NotNull(message = "El pedido es obligatorio")
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
-    @JsonBackReference
     private Pedido pedido;
 
-    @ManyToOne
+    @NotNull(message = "El producto es obligatorio")
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
+    @NotNull(message = "La cantidad es obligatoria")
+    @Min(value = 1, message = "La cantidad debe ser mayor o igual a 1")
     @Column(nullable = false)
     private Integer cantidad;
 
+    @NotNull(message = "El subtotal es obligatorio")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 

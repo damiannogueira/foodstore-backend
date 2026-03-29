@@ -13,7 +13,7 @@ import java.util.List;
 
 // Controlador que expone endpoints para manejar usuarios
 @RestController
-@RequestMapping("/usuarios")
+@RequestMapping({"/api/usuarios"})
 public class UsuarioController {
 
     @Autowired

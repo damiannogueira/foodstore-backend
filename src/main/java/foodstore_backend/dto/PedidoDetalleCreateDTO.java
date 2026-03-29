@@ -3,14 +3,14 @@ package foodstore_backend.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-// DTO para cada item del pedido
+// DTO para crear una línea de detalle dentro de un pedido
 public class PedidoDetalleCreateDTO {
 
     @NotNull(message = "El producto es obligatorio")
     private Long productoId;
 
     @NotNull(message = "La cantidad es obligatoria")
-    @Min(value = 1, message = "La cantidad debe ser mayor a 0")
+    @Min(value = 1, message = "La cantidad debe ser mayor o igual a 1")
     private Integer cantidad;
 
     public PedidoDetalleCreateDTO() {

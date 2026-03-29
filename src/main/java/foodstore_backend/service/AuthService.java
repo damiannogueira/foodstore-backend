@@ -2,7 +2,8 @@ package foodstore_backend.service;
 
 import foodstore_backend.dto.LoginRequestDTO;
 import foodstore_backend.dto.LoginResponseDTO;
-import foodstore_backend.exception.ResourceNotFoundException;
+import foodstore_backend.dto.UsuarioCreateDTO;
+import foodstore_backend.dto.UsuarioResponseDTO;
 import foodstore_backend.model.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,10 +24,6 @@ public class AuthService {
 
         Usuario usuario = usuarioService.buscarEntidadPorEmail(dto.getEmail());
 
-        if (Boolean.TRUE.equals(usuario.getEliminado())) {
-            throw new ResourceNotFoundException("Usuario no encontrado con email: " + dto.getEmail());
-        }
-
         if (!passwordEncoder.matches(dto.getPassword(), usuario.getPassword())) {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
@@ -38,6 +35,21 @@ public class AuthService {
                 usuario.getEmail(),
                 usuario.getRol(),
                 "Login exitoso"
+        );
+    }
+
+    // Registra un nuevo usuario cliente y devuelve una respuesta equivalente al login
+    public LoginResponseDTO register(UsuarioCreateDTO dto) {
+
+        UsuarioResponseDTO usuarioCreado = usuarioService.registrarUsuario(dto);
+
+        return new LoginResponseDTO(
+                usuarioCreado.getId(),
+                usuarioCreado.getNombre(),
+                usuarioCreado.getApellido(),
+                usuarioCreado.getEmail(),
+                usuarioCreado.getRol(),
+                "Registro exitoso"
         );
     }
 }

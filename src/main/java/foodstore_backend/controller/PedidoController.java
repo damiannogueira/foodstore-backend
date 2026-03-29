@@ -4,6 +4,7 @@ import foodstore_backend.dto.EstadoPedidoDTO;
 import foodstore_backend.dto.PedidoCreateDTO;
 import foodstore_backend.dto.PedidoEditDTO;
 import foodstore_backend.dto.PedidoResponseDTO;
+import foodstore_backend.model.enums.EstadoPedido;
 import foodstore_backend.service.PedidoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,25 +16,28 @@ import java.util.List;
 
 // Controlador que expone endpoints para manejar pedidos
 @RestController
-@RequestMapping("/pedidos")
+@RequestMapping({"/api/orders"})
 public class PedidoController {
 
     @Autowired
     private PedidoService pedidoService;
 
-    // Obtiene todos los pedidos activos
     @GetMapping
-    public ResponseEntity<List<PedidoResponseDTO>> listarPedidos() {
+    public ResponseEntity<List<PedidoResponseDTO>> listarPedidos(
+            @RequestParam(required = false) EstadoPedido estado) {
+
+        if (estado != null) {
+            return ResponseEntity.ok(pedidoService.listarPedidosPorEstado(estado));
+        }
+
         return ResponseEntity.ok(pedidoService.listarPedidos());
     }
 
-    // Obtiene un pedido por ID
     @GetMapping("/{id}")
     public ResponseEntity<PedidoResponseDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(pedidoService.obtenerPorId(id));
     }
 
-    // Crea un pedido nuevo
     @PostMapping
     public ResponseEntity<PedidoResponseDTO> guardarPedido(
             @Valid @RequestBody PedidoCreateDTO dto) {
@@ -41,35 +45,29 @@ public class PedidoController {
                 .body(pedidoService.guardarPedido(dto));
     }
 
-    // Actualiza los campos permitidos del pedido
     @PutMapping("/{id}")
     public ResponseEntity<PedidoResponseDTO> actualizarPedido(
             @PathVariable Long id,
-            @RequestBody PedidoEditDTO dto) {
+            @Valid @RequestBody PedidoEditDTO dto) {
         return ResponseEntity.ok(pedidoService.actualizarPedido(id, dto));
     }
 
-    // Realiza baja lógica del pedido
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarPedido(@PathVariable Long id) {
         pedidoService.eliminarPedido(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Lista los pedidos de un usuario
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<PedidoResponseDTO>> listarPedidosPorUsuario(
             @PathVariable Long usuarioId) {
         return ResponseEntity.ok(pedidoService.listarPedidosPorUsuario(usuarioId));
     }
 
-    // Actualiza únicamente el estado del pedido
-    @PutMapping("/{id}/estado")
+    @PatchMapping({"/{id}/status", "/{id}/estado"})
     public ResponseEntity<PedidoResponseDTO> actualizarEstado(
             @PathVariable Long id,
             @Valid @RequestBody EstadoPedidoDTO dto) {
-        return ResponseEntity.ok(
-                pedidoService.actualizarEstado(id, dto.getEstado())
-        );
+        return ResponseEntity.ok(pedidoService.actualizarEstado(id, dto.getEstado()));
     }
 }

@@ -14,7 +14,7 @@ import java.util.List;
 
 // Controlador que expone endpoints para manejar productos
 @RestController
-@RequestMapping("/productos")
+@RequestMapping({"/api/products"})
 public class ProductoController {
 
     @Autowired
@@ -23,6 +23,11 @@ public class ProductoController {
     @GetMapping
     public ResponseEntity<List<ProductoResponseDTO>> listarProductos() {
         return ResponseEntity.ok(productoService.listarProductos());
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<List<ProductoResponseDTO>> listarProductosDisponibles() {
+        return ResponseEntity.ok(productoService.listarProductosDisponibles());
     }
 
     @GetMapping("/{id}")
@@ -50,7 +55,7 @@ public class ProductoController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/categoria/{categoriaId}")
+    @GetMapping("/category/{categoriaId}")
     public ResponseEntity<List<ProductoResponseDTO>> listarProductosPorCategoria(@PathVariable Long categoriaId) {
         return ResponseEntity.ok(productoService.listarProductosPorCategoria(categoriaId));
     }

@@ -14,7 +14,7 @@ import java.util.List;
 
 // Controlador que expone endpoints para manejar categorías
 @RestController
-@RequestMapping("/categorias")
+@RequestMapping({"/api/categories"})
 public class CategoriaController {
 
     @Autowired

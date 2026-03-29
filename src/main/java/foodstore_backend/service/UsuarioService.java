@@ -3,7 +3,6 @@ package foodstore_backend.service;
 import foodstore_backend.dto.UsuarioCreateDTO;
 import foodstore_backend.dto.UsuarioResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
-import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Usuario;
 import foodstore_backend.model.enums.Rol;
 import foodstore_backend.repository.UsuarioRepository;
@@ -24,7 +23,7 @@ public class UsuarioService {
     private PasswordEncoder passwordEncoder;
 
     public List<UsuarioResponseDTO> listarUsuarios() {
-        return usuarioRepository.findByEliminadoFalse()
+        return usuarioRepository.findAll()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -35,19 +34,20 @@ public class UsuarioService {
     }
 
     public Usuario buscarEntidadPorId(Long id) {
-        return usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+        return usuarioRepository.findByIdOrThrow(id, "Usuario");
     }
 
     public Usuario buscarEntidadPorEmail(String email) {
-        return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
+        return usuarioRepository.findByEmailAndEliminadoFalse(email)
+                .orElseThrow(() -> new foodstore_backend.exception.ResourceNotFoundException(
+                        "Usuario no encontrado con email: " + email
+                ));
     }
 
     // Registra un usuario nuevo con mail único y contraseña hasheada
     public UsuarioResponseDTO registrarUsuario(UsuarioCreateDTO usuarioCreateDTO) {
 
-        usuarioRepository.findByEmail(usuarioCreateDTO.getEmail())
+        usuarioRepository.findByEmailAndEliminadoFalse(usuarioCreateDTO.getEmail())
                 .ifPresent(u -> {
                     throw new DuplicateResourceException(
                             "Ya existe un usuario con el email: " + usuarioCreateDTO.getEmail()

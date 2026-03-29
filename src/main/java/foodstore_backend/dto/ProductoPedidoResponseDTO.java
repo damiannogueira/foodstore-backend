@@ -2,32 +2,27 @@ package foodstore_backend.dto;
 
 import java.math.BigDecimal;
 
-// DTO de respuesta para devolver datos de un producto
-public class ProductoResponseDTO {
+// DTO resumido de producto dentro del detalle de pedido
+public class ProductoPedidoResponseDTO {
 
     private Long id;
     private String nombre;
-    private String descripcion;
     private BigDecimal precio;
     private Integer stock;
     private String imagen;
     private Boolean disponible;
-    private CategoriaResponseDTO categoria;
 
-    public ProductoResponseDTO() {
+    public ProductoPedidoResponseDTO() {
     }
 
-    public ProductoResponseDTO(Long id, String nombre, String descripcion, BigDecimal precio,
-                               Integer stock, String imagen, Boolean disponible,
-                               CategoriaResponseDTO categoria) {
+    public ProductoPedidoResponseDTO(Long id, String nombre, BigDecimal precio,
+                                     Integer stock, String imagen, Boolean disponible) {
         this.id = id;
         this.nombre = nombre;
-        this.descripcion = descripcion;
         this.precio = precio;
         this.stock = stock;
         this.imagen = imagen;
         this.disponible = disponible;
-        this.categoria = categoria;
     }
 
     public Long getId() {
@@ -36,10 +31,6 @@ public class ProductoResponseDTO {
 
     public String getNombre() {
         return nombre;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
     }
 
     public BigDecimal getPrecio() {
@@ -58,20 +49,12 @@ public class ProductoResponseDTO {
         return disponible;
     }
 
-    public CategoriaResponseDTO getCategoria() {
-        return categoria;
-    }
-
     public void setId(Long id) {
         this.id = id;
     }
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
     }
 
     public void setPrecio(BigDecimal precio) {
@@ -88,9 +71,5 @@ public class ProductoResponseDTO {
 
     public void setDisponible(Boolean disponible) {
         this.disponible = disponible;
-    }
-
-    public void setCategoria(CategoriaResponseDTO categoria) {
-        this.categoria = categoria;
     }
 }

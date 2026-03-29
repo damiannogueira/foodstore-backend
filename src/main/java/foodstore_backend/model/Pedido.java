@@ -1,9 +1,11 @@
 package foodstore_backend.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import foodstore_backend.model.enums.EstadoPedido;
 import foodstore_backend.model.enums.FormaPago;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,26 +17,44 @@ import java.util.List;
 @Table(name = "pedidos")
 public class Pedido extends Base {
 
-    @ManyToOne
+    @NotNull(message = "El usuario es obligatorio")
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
+    @NotNull(message = "La fecha es obligatoria")
     @Column(nullable = false)
     private LocalDateTime fecha;
 
+    @NotNull(message = "El estado es obligatorio")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private EstadoPedido estado;
 
+    @NotNull(message = "La forma de pago es obligatoria")
     @Enumerated(EnumType.STRING)
-    @Column(name = "forma_pago", nullable = false)
+    @Column(nullable = false, length = 30)
     private FormaPago formaPago;
 
+    @NotNull(message = "El total es obligatorio")
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal total;
+    private BigDecimal total = BigDecimal.ZERO;
+
+    @NotBlank(message = "El teléfono es obligatorio")
+    @Size(max = 50, message = "El teléfono no puede exceder 50 caracteres")
+    @Column(nullable = false, length = 50)
+    private String telefono;
+
+    @NotBlank(message = "La dirección de entrega es obligatoria")
+    @Size(max = 255, message = "La dirección no puede exceder 255 caracteres")
+    @Column(nullable = false, length = 255)
+    private String direccionEntrega;
+
+    @Size(max = 500, message = "Las notas no pueden exceder 500 caracteres")
+    @Column(length = 500)
+    private String notas;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
     private List<DetallePedido> detalles = new ArrayList<>();
 
     public Pedido() {
@@ -78,6 +98,30 @@ public class Pedido extends Base {
 
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
+    public String getDireccionEntrega() {
+        return direccionEntrega;
+    }
+
+    public void setDireccionEntrega(String direccionEntrega) {
+        this.direccionEntrega = direccionEntrega;
+    }
+
+    public String getNotas() {
+        return notas;
+    }
+
+    public void setNotas(String notas) {
+        this.notas = notas;
     }
 
     public List<DetallePedido> getDetalles() {

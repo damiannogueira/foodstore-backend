@@ -5,7 +5,6 @@ import foodstore_backend.dto.ProductoCreateDTO;
 import foodstore_backend.dto.ProductoEditDTO;
 import foodstore_backend.dto.ProductoResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
-import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Categoria;
 import foodstore_backend.model.Producto;
 import foodstore_backend.repository.ProductoRepository;
@@ -25,7 +24,14 @@ public class ProductoService {
     private CategoriaService categoriaService;
 
     public List<ProductoResponseDTO> listarProductos() {
-        return productoRepository.findByEliminadoFalse()
+        return productoRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    public List<ProductoResponseDTO> listarProductosDisponibles() {
+        return productoRepository.findByDisponibleTrueAndEliminadoFalse()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -36,28 +42,29 @@ public class ProductoService {
     }
 
     public Producto buscarPorId(Long id) {
-        return productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
+        return productoRepository.findByIdOrThrow(id, "Producto");
     }
 
-    // Guarda un producto validando nombre duplicado y existencia de categoría
-    public ProductoResponseDTO guardarProducto(ProductoCreateDTO productoCreateDTO) {
+    public ProductoResponseDTO guardarProducto(ProductoCreateDTO dto) {
 
-        productoRepository.findByNombre(productoCreateDTO.getNombre())
+        productoRepository.findByNombreIgnoreCaseAndEliminadoFalse(dto.getNombre().trim())
                 .ifPresent(p -> {
                     throw new DuplicateResourceException(
-                            "El producto ya existe con nombre: " + productoCreateDTO.getNombre()
+                            "El producto ya existe con nombre: " + dto.getNombre()
                     );
                 });
 
-        Long categoriaId = productoCreateDTO.getCategoriaId();
-        Categoria categoria = categoriaService.buscarPorId(categoriaId);
+        validarImagen(dto.getImagen());
+
+        Categoria categoria = categoriaService.buscarPorId(dto.getCategoriaId());
 
         Producto producto = new Producto();
-        producto.setNombre(productoCreateDTO.getNombre());
-        producto.setDescripcion(productoCreateDTO.getDescripcion());
-        producto.setPrecio(productoCreateDTO.getPrecio());
-        producto.setStock(productoCreateDTO.getStock());
+        producto.setNombre(dto.getNombre().trim());
+        producto.setDescripcion(dto.getDescripcion().trim());
+        producto.setPrecio(dto.getPrecio());
+        producto.setStock(dto.getStock());
+        producto.setImagen(dto.getImagen().trim());
+        producto.setDisponible(dto.getDisponible());
         producto.setCategoria(categoria);
         producto.setEliminado(false);
 
@@ -65,37 +72,47 @@ public class ProductoService {
         return toResponseDTO(productoGuardado);
     }
 
-    // Realiza baja lógica sin eliminar físicamente el usuario
-    public ProductoResponseDTO actualizarProducto(Long id, ProductoEditDTO productoEditDTO) {
+    public ProductoResponseDTO actualizarProducto(Long id, ProductoEditDTO dto) {
         Producto producto = buscarPorId(id);
 
-        String nuevoNombre = productoEditDTO.getNombre();
-        if (nuevoNombre != null && !nuevoNombre.equalsIgnoreCase(producto.getNombre())) {
-            productoRepository.findByNombre(nuevoNombre)
-                    .ifPresent(p -> {
-                        throw new DuplicateResourceException(
-                                "El producto ya existe con nombre: " + nuevoNombre
-                        );
-                    });
+        if (dto.getNombre() != null) {
+            String nuevoNombre = dto.getNombre().trim();
+
+            if (!nuevoNombre.equalsIgnoreCase(producto.getNombre())) {
+                productoRepository.findByNombreIgnoreCaseAndEliminadoFalse(nuevoNombre)
+                        .ifPresent(p -> {
+                            throw new DuplicateResourceException(
+                                    "El producto ya existe con nombre: " + nuevoNombre
+                            );
+                        });
+            }
+
             producto.setNombre(nuevoNombre);
         }
 
-        String nuevaDescripcion = productoEditDTO.getDescripcion();
-        if (nuevaDescripcion != null) {
-            producto.setDescripcion(nuevaDescripcion);
+        if (dto.getDescripcion() != null) {
+            producto.setDescripcion(dto.getDescripcion().trim());
         }
 
-        if (productoEditDTO.getPrecio() != null) {
-            producto.setPrecio(productoEditDTO.getPrecio());
+        if (dto.getPrecio() != null) {
+            producto.setPrecio(dto.getPrecio());
         }
 
-        if (productoEditDTO.getStock() != null) {
-            producto.setStock(productoEditDTO.getStock());
+        if (dto.getStock() != null) {
+            producto.setStock(dto.getStock());
         }
 
-        Long categoriaId = productoEditDTO.getCategoriaId();
-        if (categoriaId != null) {
-            Categoria categoria = categoriaService.buscarPorId(categoriaId);
+        if (dto.getImagen() != null) {
+            validarImagen(dto.getImagen());
+            producto.setImagen(dto.getImagen().trim());
+        }
+
+        if (dto.getDisponible() != null) {
+            producto.setDisponible(dto.getDisponible());
+        }
+
+        if (dto.getCategoriaId() != null) {
+            Categoria categoria = categoriaService.buscarPorId(dto.getCategoriaId());
             producto.setCategoria(categoria);
         }
 
@@ -103,7 +120,6 @@ public class ProductoService {
         return toResponseDTO(productoGuardado);
     }
 
-    // Realiza baja lógica sin eliminar físicamente el registro
     public void eliminarProducto(Long id) {
         Producto producto = buscarPorId(id);
         producto.setEliminado(true);
@@ -119,13 +135,24 @@ public class ProductoService {
                 .toList();
     }
 
+    private void validarImagen(String imagen) {
+        String valor = imagen == null ? "" : imagen.trim().toLowerCase();
+
+        boolean esValida = valor.startsWith("http://") || valor.startsWith("https://");
+
+        if (!esValida) {
+            throw new IllegalArgumentException("La imagen debe ser una URL válida");
+        }
+    }
+
     private ProductoResponseDTO toResponseDTO(Producto producto) {
         Categoria categoria = producto.getCategoria();
 
         CategoriaResponseDTO categoriaDTO = new CategoriaResponseDTO(
                 categoria.getId(),
                 categoria.getNombre(),
-                categoria.getDescripcion()
+                categoria.getDescripcion(),
+                categoria.getImagen()
         );
 
         return new ProductoResponseDTO(
@@ -134,6 +161,8 @@ public class ProductoService {
                 producto.getDescripcion(),
                 producto.getPrecio(),
                 producto.getStock(),
+                producto.getImagen(),
+                producto.getDisponible(),
                 categoriaDTO
         );
     }

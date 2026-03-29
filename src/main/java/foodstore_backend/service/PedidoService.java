@@ -1,12 +1,7 @@
 package foodstore_backend.service;
 
-import foodstore_backend.dto.DetallePedidoResponseDTO;
-import foodstore_backend.dto.PedidoCreateDTO;
-import foodstore_backend.dto.PedidoDetalleCreateDTO;
-import foodstore_backend.dto.PedidoEditDTO;
-import foodstore_backend.dto.PedidoResponseDTO;
+import foodstore_backend.dto.*;
 import foodstore_backend.exception.InsufficientStockException;
-import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.DetallePedido;
 import foodstore_backend.model.Pedido;
 import foodstore_backend.model.Producto;
@@ -19,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 // Servicio que contiene la lógica de negocio para manejar pedidos
@@ -34,45 +30,53 @@ public class PedidoService {
     @Autowired
     private ProductoService productoService;
 
-    // Devuelve todos los pedidos no eliminados
     public List<PedidoResponseDTO> listarPedidos() {
-        return pedidoRepository.findByEliminadoFalse()
+        return pedidoRepository.findAll()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
 
-    // Busca un pedido por ID o lanza excepción si no existe
-    public Pedido buscarPorId(Long id) {
-        return pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
+    public List<PedidoResponseDTO> listarPedidosPorUsuario(Long usuarioId) {
+        usuarioService.buscarEntidadPorId(usuarioId);
+
+        return pedidoRepository.findByUsuarioIdAndEliminadoFalse(usuarioId)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    // Obtiene un pedido por ID y lo devuelve como DTO
+    public List<PedidoResponseDTO> listarPedidosPorEstado(EstadoPedido estado) {
+        return pedidoRepository.findByEstadoAndEliminadoFalse(estado)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    public Pedido buscarPorId(Long id) {
+        return pedidoRepository.findByIdOrThrow(id, "Pedido");
+    }
+
     public PedidoResponseDTO obtenerPorId(Long id) {
         return toResponseDTO(buscarPorId(id));
     }
 
-    // Crea un pedido nuevo, valida stock, calcula subtotales y descuenta stock
     @Transactional
     public PedidoResponseDTO guardarPedido(PedidoCreateDTO dto) {
 
-        Long usuarioId = dto.getUsuarioId();
-        Usuario usuario = usuarioService.buscarEntidadPorId(usuarioId);
+        Usuario usuario = usuarioService.buscarEntidadPorId(dto.getUsuarioId());
 
-        Pedido pedido = new Pedido();
-        pedido.setUsuario(usuario);
-        pedido.setFormaPago(dto.getFormaPago());
-        pedido.setFecha(LocalDateTime.now());
-        pedido.setEstado(EstadoPedido.PENDIENTE);
-        pedido.setEliminado(false);
+        List<Producto> productosValidados = new ArrayList<>();
+        List<PedidoDetalleCreateDTO> items = dto.getDetalles();
 
-        BigDecimal total = BigDecimal.ZERO;
+        for (PedidoDetalleCreateDTO item : items) {
+            Producto producto = productoService.buscarPorId(item.getProductoId());
 
-        for (PedidoDetalleCreateDTO item : dto.getDetalles()) {
-
-            Long productoId = item.getProductoId();
-            Producto producto = productoService.buscarPorId(productoId);
+            if (!Boolean.TRUE.equals(producto.getDisponible())) {
+                throw new IllegalArgumentException(
+                        "El producto '" + producto.getNombre() + "' no está disponible para la venta"
+                );
+            }
 
             if (producto.getStock() < item.getCantidad()) {
                 throw new InsufficientStockException(
@@ -80,19 +84,37 @@ public class PedidoService {
                 );
             }
 
+            productosValidados.add(producto);
+        }
+
+        Pedido pedido = new Pedido();
+        pedido.setUsuario(usuario);
+        pedido.setFecha(LocalDateTime.now());
+        pedido.setEstado(EstadoPedido.PENDIENTE);
+        pedido.setFormaPago(dto.getFormaPago());
+        pedido.setTelefono(dto.getTelefono().trim());
+        pedido.setDireccionEntrega(dto.getDireccionEntrega().trim());
+        pedido.setNotas(dto.getNotas() != null ? dto.getNotas().trim() : null);
+        pedido.setEliminado(false);
+
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (int i = 0; i < items.size(); i++) {
+            PedidoDetalleCreateDTO item = items.get(i);
+            Producto producto = productosValidados.get(i);
+
             BigDecimal subtotal = producto.getPrecio()
                     .multiply(BigDecimal.valueOf(item.getCantidad()));
 
             DetallePedido detalle = new DetallePedido();
-            detalle.setProducto(producto);
             detalle.setPedido(pedido);
+            detalle.setProducto(producto);
             detalle.setCantidad(item.getCantidad());
             detalle.setSubtotal(subtotal);
             detalle.setEliminado(false);
 
             pedido.getDetalles().add(detalle);
 
-            // Se descuenta stock una vez validado el producto
             producto.setStock(producto.getStock() - item.getCantidad());
 
             total = total.add(subtotal);
@@ -104,7 +126,6 @@ public class PedidoService {
         return toResponseDTO(guardado);
     }
 
-    // Actualiza solo los campos (pedidos por consigna): estado y forma de pago
     @Transactional
     public PedidoResponseDTO actualizarPedido(Long id, PedidoEditDTO dto) {
         Pedido pedido = buscarPorId(id);
@@ -117,27 +138,21 @@ public class PedidoService {
             pedido.setFormaPago(dto.getFormaPago());
         }
 
+        if (dto.getTelefono() != null) {
+            pedido.setTelefono(dto.getTelefono().trim());
+        }
+
+        if (dto.getDireccionEntrega() != null) {
+            pedido.setDireccionEntrega(dto.getDireccionEntrega().trim());
+        }
+
+        if (dto.getNotas() != null) {
+            pedido.setNotas(dto.getNotas().trim());
+        }
+
         return toResponseDTO(pedidoRepository.save(pedido));
     }
 
-    // Realiza baja lógica del pedido sin eliminar sus detalles
-    @Transactional
-    public void eliminarPedido(Long id) {
-        Pedido pedido = buscarPorId(id);
-        pedido.setEliminado(true);
-        pedidoRepository.save(pedido);
-    }
-
-    // Lista los pedidos activos de un usuario
-    public List<PedidoResponseDTO> listarPedidosPorUsuario(Long usuarioId) {
-        usuarioService.buscarEntidadPorId(usuarioId);
-        return pedidoRepository.findByUsuarioIdAndEliminadoFalse(usuarioId)
-                .stream()
-                .map(this::toResponseDTO)
-                .toList();
-    }
-
-    // Actualiza únicamente el estado del pedido
     @Transactional
     public PedidoResponseDTO actualizarEstado(Long id, EstadoPedido nuevoEstado) {
         Pedido pedido = buscarPorId(id);
@@ -145,17 +160,36 @@ public class PedidoService {
         return toResponseDTO(pedidoRepository.save(pedido));
     }
 
-    // Convierte la entidad Pedido a un DTO de respuesta con detalles
+    @Transactional
+    public void eliminarPedido(Long id) {
+        Pedido pedido = buscarPorId(id);
+        pedido.setEliminado(true);
+        pedidoRepository.save(pedido);
+    }
+
     private PedidoResponseDTO toResponseDTO(Pedido pedido) {
 
         List<DetallePedidoResponseDTO> detalles = pedido.getDetalles()
                 .stream()
-                .map(d -> new DetallePedidoResponseDTO(
-                        d.getProducto().getId(),
-                        d.getProducto().getNombre(),
-                        d.getCantidad(),
-                        d.getSubtotal()
-                ))
+                .map(d -> {
+                    Producto producto = d.getProducto();
+
+                    ProductoPedidoResponseDTO productoDTO = new ProductoPedidoResponseDTO(
+                            producto.getId(),
+                            producto.getNombre(),
+                            producto.getPrecio(),
+                            producto.getStock(),
+                            producto.getImagen(),
+                            producto.getDisponible()
+                    );
+
+                    return new DetallePedidoResponseDTO(
+                            d.getId(),
+                            d.getCantidad(),
+                            d.getSubtotal(),
+                            productoDTO
+                    );
+                })
                 .toList();
 
         return new PedidoResponseDTO(
@@ -166,6 +200,9 @@ public class PedidoService {
                 pedido.getEstado(),
                 pedido.getFormaPago(),
                 pedido.getTotal(),
+                pedido.getTelefono(),
+                pedido.getDireccionEntrega(),
+                pedido.getNotas(),
                 detalles
         );
     }
