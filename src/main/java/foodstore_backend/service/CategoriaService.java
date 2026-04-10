@@ -4,6 +4,7 @@ import foodstore_backend.dto.CategoriaCreateDTO;
 import foodstore_backend.dto.CategoriaEditDTO;
 import foodstore_backend.dto.CategoriaResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
+import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Categoria;
 import foodstore_backend.repository.CategoriaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ public class CategoriaService {
     private CategoriaRepository categoriaRepository;
 
     public List<CategoriaResponseDTO> listarCategorias() {
-        return categoriaRepository.findAll()
+        return categoriaRepository.findAllByEliminadoFalse()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -30,25 +31,28 @@ public class CategoriaService {
     }
 
     public Categoria buscarPorId(Long id) {
-        return categoriaRepository.findByIdOrThrow(id, "Categoría");
+        return categoriaRepository.findByIdAndEliminadoFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Categoría no encontrada con id: " + id
+                ));
     }
 
     // Guarda una categoría validando nombre duplicado
     public CategoriaResponseDTO guardarCategoria(CategoriaCreateDTO dto) {
 
-        categoriaRepository.findByNombreIgnoreCaseAndEliminadoFalse(dto.getNombre())
+        categoriaRepository.findByNombreIgnoreCaseAndEliminadoFalse(dto.nombre())
                 .ifPresent(c -> {
                     throw new DuplicateResourceException(
-                            "La categoría ya existe con nombre: " + dto.getNombre()
+                            "La categoría ya existe con nombre: " + dto.nombre()
                     );
                 });
 
-        validarImagen(dto.getImagen());
+        validarImagen(dto.imagen());
 
         Categoria categoria = new Categoria();
-        categoria.setNombre(dto.getNombre().trim());
-        categoria.setDescripcion(dto.getDescripcion().trim());
-        categoria.setImagen(dto.getImagen().trim());
+        categoria.setNombre(dto.nombre().trim());
+        categoria.setDescripcion(dto.descripcion().trim());
+        categoria.setImagen(dto.imagen().trim());
         categoria.setEliminado(false);
 
         Categoria categoriaGuardada = categoriaRepository.save(categoria);
@@ -59,8 +63,8 @@ public class CategoriaService {
     public CategoriaResponseDTO actualizarCategoria(Long id, CategoriaEditDTO dto) {
         Categoria categoria = buscarPorId(id);
 
-        if (dto.getNombre() != null) {
-            String nuevoNombre = dto.getNombre().trim();
+        if (dto.nombre() != null) {
+            String nuevoNombre = dto.nombre().trim();
 
             if (!nuevoNombre.equalsIgnoreCase(categoria.getNombre())) {
                 categoriaRepository.findByNombreIgnoreCaseAndEliminadoFalse(nuevoNombre)
@@ -74,13 +78,13 @@ public class CategoriaService {
             categoria.setNombre(nuevoNombre);
         }
 
-        if (dto.getDescripcion() != null) {
-            categoria.setDescripcion(dto.getDescripcion().trim());
+        if (dto.descripcion() != null) {
+            categoria.setDescripcion(dto.descripcion().trim());
         }
 
-        if (dto.getImagen() != null) {
-            validarImagen(dto.getImagen());
-            categoria.setImagen(dto.getImagen().trim());
+        if (dto.imagen() != null) {
+            validarImagen(dto.imagen());
+            categoria.setImagen(dto.imagen().trim());
         }
 
         Categoria categoriaGuardada = categoriaRepository.save(categoria);

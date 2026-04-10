@@ -22,9 +22,9 @@ public class AuthService {
     // Valida credenciales de acceso y devuelve los datos del usuario autenticado
     public LoginResponseDTO login(LoginRequestDTO dto) {
 
-        Usuario usuario = usuarioService.buscarEntidadPorEmail(dto.getEmail());
+        Usuario usuario = usuarioService.buscarEntidadPorEmail(dto.email());
 
-        if (!passwordEncoder.matches(dto.getPassword(), usuario.getPassword())) {
+        if (!passwordEncoder.matches(dto.password(), usuario.getPassword())) {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
 
@@ -44,11 +44,11 @@ public class AuthService {
         UsuarioResponseDTO usuarioCreado = usuarioService.registrarUsuario(dto);
 
         return new LoginResponseDTO(
-                usuarioCreado.getId(),
-                usuarioCreado.getNombre(),
-                usuarioCreado.getApellido(),
-                usuarioCreado.getEmail(),
-                usuarioCreado.getRol(),
+                usuarioCreado.id(),
+                usuarioCreado.nombre(),
+                usuarioCreado.apellido(),
+                usuarioCreado.email(),
+                usuarioCreado.rol(),
                 "Registro exitoso"
         );
     }

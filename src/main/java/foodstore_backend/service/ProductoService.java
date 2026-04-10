@@ -5,6 +5,7 @@ import foodstore_backend.dto.ProductoCreateDTO;
 import foodstore_backend.dto.ProductoEditDTO;
 import foodstore_backend.dto.ProductoResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
+import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Categoria;
 import foodstore_backend.model.Producto;
 import foodstore_backend.repository.ProductoRepository;
@@ -24,7 +25,7 @@ public class ProductoService {
     private CategoriaService categoriaService;
 
     public List<ProductoResponseDTO> listarProductos() {
-        return productoRepository.findAll()
+        return productoRepository.findAllByEliminadoFalse()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -42,29 +43,32 @@ public class ProductoService {
     }
 
     public Producto buscarPorId(Long id) {
-        return productoRepository.findByIdOrThrow(id, "Producto");
+        return productoRepository.findByIdAndEliminadoFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Producto no encontrado con id: " + id
+                ));
     }
 
     public ProductoResponseDTO guardarProducto(ProductoCreateDTO dto) {
 
-        productoRepository.findByNombreIgnoreCaseAndEliminadoFalse(dto.getNombre().trim())
+        productoRepository.findByNombreIgnoreCaseAndEliminadoFalse(dto.nombre().trim())
                 .ifPresent(p -> {
                     throw new DuplicateResourceException(
-                            "El producto ya existe con nombre: " + dto.getNombre()
+                            "El producto ya existe con nombre: " + dto.nombre()
                     );
                 });
 
-        validarImagen(dto.getImagen());
+        validarImagen(dto.imagen());
 
-        Categoria categoria = categoriaService.buscarPorId(dto.getCategoriaId());
+        Categoria categoria = categoriaService.buscarPorId(dto.categoriaId());
 
         Producto producto = new Producto();
-        producto.setNombre(dto.getNombre().trim());
-        producto.setDescripcion(dto.getDescripcion().trim());
-        producto.setPrecio(dto.getPrecio());
-        producto.setStock(dto.getStock());
-        producto.setImagen(dto.getImagen().trim());
-        producto.setDisponible(dto.getDisponible());
+        producto.setNombre(dto.nombre().trim());
+        producto.setDescripcion(dto.descripcion().trim());
+        producto.setPrecio(dto.precio());
+        producto.setStock(dto.stock());
+        producto.setImagen(dto.imagen().trim());
+        producto.setDisponible(dto.disponible());
         producto.setCategoria(categoria);
         producto.setEliminado(false);
 
@@ -75,8 +79,8 @@ public class ProductoService {
     public ProductoResponseDTO actualizarProducto(Long id, ProductoEditDTO dto) {
         Producto producto = buscarPorId(id);
 
-        if (dto.getNombre() != null) {
-            String nuevoNombre = dto.getNombre().trim();
+        if (dto.nombre() != null) {
+            String nuevoNombre = dto.nombre().trim();
 
             if (!nuevoNombre.equalsIgnoreCase(producto.getNombre())) {
                 productoRepository.findByNombreIgnoreCaseAndEliminadoFalse(nuevoNombre)
@@ -90,29 +94,29 @@ public class ProductoService {
             producto.setNombre(nuevoNombre);
         }
 
-        if (dto.getDescripcion() != null) {
-            producto.setDescripcion(dto.getDescripcion().trim());
+        if (dto.descripcion() != null) {
+            producto.setDescripcion(dto.descripcion().trim());
         }
 
-        if (dto.getPrecio() != null) {
-            producto.setPrecio(dto.getPrecio());
+        if (dto.precio() != null) {
+            producto.setPrecio(dto.precio());
         }
 
-        if (dto.getStock() != null) {
-            producto.setStock(dto.getStock());
+        if (dto.stock() != null) {
+            producto.setStock(dto.stock());
         }
 
-        if (dto.getImagen() != null) {
-            validarImagen(dto.getImagen());
-            producto.setImagen(dto.getImagen().trim());
+        if (dto.imagen() != null) {
+            validarImagen(dto.imagen());
+            producto.setImagen(dto.imagen().trim());
         }
 
-        if (dto.getDisponible() != null) {
-            producto.setDisponible(dto.getDisponible());
+        if (dto.disponible() != null) {
+            producto.setDisponible(dto.disponible());
         }
 
-        if (dto.getCategoriaId() != null) {
-            Categoria categoria = categoriaService.buscarPorId(dto.getCategoriaId());
+        if (dto.categoriaId() != null) {
+            Categoria categoria = categoriaService.buscarPorId(dto.categoriaId());
             producto.setCategoria(categoria);
         }
 

@@ -1,6 +1,7 @@
 package foodstore_backend.controller;
 
 import foodstore_backend.dto.UsuarioCreateDTO;
+import foodstore_backend.dto.UsuarioEditDTO;
 import foodstore_backend.dto.UsuarioResponseDTO;
 import foodstore_backend.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -13,7 +14,7 @@ import java.util.List;
 
 // Controlador que expone endpoints para manejar usuarios
 @RestController
-@RequestMapping({"/api/usuarios"})
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     @Autowired
@@ -30,9 +31,19 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<UsuarioResponseDTO> crearUsuario(@Valid @RequestBody UsuarioCreateDTO usuarioCreateDTO) {
+    public ResponseEntity<UsuarioResponseDTO> crearUsuario(
+            @Valid @RequestBody UsuarioCreateDTO usuarioCreateDTO
+    ) {
         UsuarioResponseDTO usuarioCreado = usuarioService.registrarUsuario(usuarioCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioCreado);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> actualizarUsuario(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioEditDTO usuarioEditDTO
+    ) {
+        return ResponseEntity.ok(usuarioService.actualizarUsuario(id, usuarioEditDTO));
     }
 
     @DeleteMapping("/{id}")

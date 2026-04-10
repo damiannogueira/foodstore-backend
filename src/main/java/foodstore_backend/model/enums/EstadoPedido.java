@@ -1,9 +1,12 @@
 package foodstore_backend.model.enums;
 
-// Enum que define los posibles estados de un pedido
+// Estados posibles de un pedido
 public enum EstadoPedido {
     PENDIENTE,
     CONFIRMADO,
-    CANCELADO,
-    ENTREGADO
+    EN_PREPARACION,
+    ENVIADO,
+    ENTREGADO,
+    TERMINADO,
+    CANCELADO
 }

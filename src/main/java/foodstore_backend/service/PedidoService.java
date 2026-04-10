@@ -1,7 +1,13 @@
 package foodstore_backend.service;
 
-import foodstore_backend.dto.*;
+import foodstore_backend.dto.DetallePedidoResponseDTO;
+import foodstore_backend.dto.PedidoCreateDTO;
+import foodstore_backend.dto.PedidoDetalleCreateDTO;
+import foodstore_backend.dto.PedidoEditDTO;
+import foodstore_backend.dto.PedidoResponseDTO;
+import foodstore_backend.dto.ProductoPedidoResponseDTO;
 import foodstore_backend.exception.InsufficientStockException;
+import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.DetallePedido;
 import foodstore_backend.model.Pedido;
 import foodstore_backend.model.Producto;
@@ -31,7 +37,7 @@ public class PedidoService {
     private ProductoService productoService;
 
     public List<PedidoResponseDTO> listarPedidos() {
-        return pedidoRepository.findAll()
+        return pedidoRepository.findAllByEliminadoFalse()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -54,7 +60,10 @@ public class PedidoService {
     }
 
     public Pedido buscarPorId(Long id) {
-        return pedidoRepository.findByIdOrThrow(id, "Pedido");
+        return pedidoRepository.findByIdAndEliminadoFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Pedido no encontrado con id: " + id
+                ));
     }
 
     public PedidoResponseDTO obtenerPorId(Long id) {
@@ -64,13 +73,13 @@ public class PedidoService {
     @Transactional
     public PedidoResponseDTO guardarPedido(PedidoCreateDTO dto) {
 
-        Usuario usuario = usuarioService.buscarEntidadPorId(dto.getUsuarioId());
+        Usuario usuario = usuarioService.buscarEntidadPorId(dto.usuarioId());
 
         List<Producto> productosValidados = new ArrayList<>();
-        List<PedidoDetalleCreateDTO> items = dto.getDetalles();
+        List<PedidoDetalleCreateDTO> items = dto.detalles();
 
         for (PedidoDetalleCreateDTO item : items) {
-            Producto producto = productoService.buscarPorId(item.getProductoId());
+            Producto producto = productoService.buscarPorId(item.productoId());
 
             if (!Boolean.TRUE.equals(producto.getDisponible())) {
                 throw new IllegalArgumentException(
@@ -78,7 +87,7 @@ public class PedidoService {
                 );
             }
 
-            if (producto.getStock() < item.getCantidad()) {
+            if (producto.getStock() < item.cantidad()) {
                 throw new InsufficientStockException(
                         "Stock insuficiente para el producto: " + producto.getNombre()
                 );
@@ -91,10 +100,10 @@ public class PedidoService {
         pedido.setUsuario(usuario);
         pedido.setFecha(LocalDateTime.now());
         pedido.setEstado(EstadoPedido.PENDIENTE);
-        pedido.setFormaPago(dto.getFormaPago());
-        pedido.setTelefono(dto.getTelefono().trim());
-        pedido.setDireccionEntrega(dto.getDireccionEntrega().trim());
-        pedido.setNotas(dto.getNotas() != null ? dto.getNotas().trim() : null);
+        pedido.setFormaPago(dto.formaPago());
+        pedido.setTelefono(dto.telefono().trim());
+        pedido.setDireccionEntrega(dto.direccionEntrega().trim());
+        pedido.setNotas(dto.notas() != null ? dto.notas().trim() : null);
         pedido.setEliminado(false);
 
         BigDecimal total = BigDecimal.ZERO;
@@ -104,18 +113,18 @@ public class PedidoService {
             Producto producto = productosValidados.get(i);
 
             BigDecimal subtotal = producto.getPrecio()
-                    .multiply(BigDecimal.valueOf(item.getCantidad()));
+                    .multiply(BigDecimal.valueOf(item.cantidad()));
 
             DetallePedido detalle = new DetallePedido();
             detalle.setPedido(pedido);
             detalle.setProducto(producto);
-            detalle.setCantidad(item.getCantidad());
+            detalle.setCantidad(item.cantidad());
             detalle.setSubtotal(subtotal);
             detalle.setEliminado(false);
 
             pedido.getDetalles().add(detalle);
 
-            producto.setStock(producto.getStock() - item.getCantidad());
+            producto.setStock(producto.getStock() - item.cantidad());
 
             total = total.add(subtotal);
         }
@@ -130,27 +139,16 @@ public class PedidoService {
     public PedidoResponseDTO actualizarPedido(Long id, PedidoEditDTO dto) {
         Pedido pedido = buscarPorId(id);
 
-        if (dto.getEstado() != null) {
-            pedido.setEstado(dto.getEstado());
+        if (dto.estado() != null) {
+            pedido.setEstado(dto.estado());
         }
 
-        if (dto.getFormaPago() != null) {
-            pedido.setFormaPago(dto.getFormaPago());
+        if (dto.formaPago() != null) {
+            pedido.setFormaPago(dto.formaPago());
         }
 
-        if (dto.getTelefono() != null) {
-            pedido.setTelefono(dto.getTelefono().trim());
-        }
-
-        if (dto.getDireccionEntrega() != null) {
-            pedido.setDireccionEntrega(dto.getDireccionEntrega().trim());
-        }
-
-        if (dto.getNotas() != null) {
-            pedido.setNotas(dto.getNotas().trim());
-        }
-
-        return toResponseDTO(pedidoRepository.save(pedido));
+        Pedido pedidoActualizado = pedidoRepository.save(pedido);
+        return toResponseDTO(pedidoActualizado);
     }
 
     @Transactional

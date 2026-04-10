@@ -1,8 +1,10 @@
 package foodstore_backend.service;
 
 import foodstore_backend.dto.UsuarioCreateDTO;
+import foodstore_backend.dto.UsuarioEditDTO;
 import foodstore_backend.dto.UsuarioResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
+import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Usuario;
 import foodstore_backend.model.enums.Rol;
 import foodstore_backend.repository.UsuarioRepository;
@@ -23,7 +25,7 @@ public class UsuarioService {
     private PasswordEncoder passwordEncoder;
 
     public List<UsuarioResponseDTO> listarUsuarios() {
-        return usuarioRepository.findAll()
+        return usuarioRepository.findAllByEliminadoFalse()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -34,37 +36,80 @@ public class UsuarioService {
     }
 
     public Usuario buscarEntidadPorId(Long id) {
-        return usuarioRepository.findByIdOrThrow(id, "Usuario");
+        return usuarioRepository.findByIdAndEliminadoFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Usuario no encontrado con id: " + id
+                ));
     }
 
     public Usuario buscarEntidadPorEmail(String email) {
         return usuarioRepository.findByEmailAndEliminadoFalse(email)
-                .orElseThrow(() -> new foodstore_backend.exception.ResourceNotFoundException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Usuario no encontrado con email: " + email
                 ));
     }
 
-    // Registra un usuario nuevo con mail único y contraseña hasheada
+    // Registra un usuario nuevo con mail único y contraseña encriptada
     public UsuarioResponseDTO registrarUsuario(UsuarioCreateDTO usuarioCreateDTO) {
 
-        usuarioRepository.findByEmailAndEliminadoFalse(usuarioCreateDTO.getEmail())
+        usuarioRepository.findByEmailAndEliminadoFalse(usuarioCreateDTO.email())
                 .ifPresent(u -> {
                     throw new DuplicateResourceException(
-                            "Ya existe un usuario con el email: " + usuarioCreateDTO.getEmail()
+                            "Ya existe un usuario con el email: " + usuarioCreateDTO.email()
                     );
                 });
 
         Usuario usuario = new Usuario();
-        usuario.setNombre(usuarioCreateDTO.getNombre());
-        usuario.setApellido(usuarioCreateDTO.getApellido());
-        usuario.setEmail(usuarioCreateDTO.getEmail());
-        usuario.setPassword(passwordEncoder.encode(usuarioCreateDTO.getPassword()));
+        usuario.setNombre(usuarioCreateDTO.nombre());
+        usuario.setApellido(usuarioCreateDTO.apellido());
+        usuario.setEmail(usuarioCreateDTO.email());
+        usuario.setCelular(usuarioCreateDTO.celular());
+        usuario.setPassword(passwordEncoder.encode(usuarioCreateDTO.password()));
         usuario.setRol(Rol.USUARIO);
         usuario.setEliminado(false);
 
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
         return toResponseDTO(usuarioGuardado);
+    }
+
+    // Actualiza solo los campos enviados
+    public UsuarioResponseDTO actualizarUsuario(Long id, UsuarioEditDTO usuarioEditDTO) {
+        Usuario usuario = buscarEntidadPorId(id);
+
+        if (usuarioEditDTO.nombre() != null && !usuarioEditDTO.nombre().trim().isEmpty()) {
+            usuario.setNombre(usuarioEditDTO.nombre());
+        }
+
+        if (usuarioEditDTO.apellido() != null && !usuarioEditDTO.apellido().trim().isEmpty()) {
+            usuario.setApellido(usuarioEditDTO.apellido());
+        }
+
+        if (usuarioEditDTO.email() != null && !usuarioEditDTO.email().trim().isEmpty()) {
+            String nuevoEmail = usuarioEditDTO.email();
+
+            usuarioRepository.findByEmailAndEliminadoFalse(nuevoEmail)
+                    .ifPresent(u -> {
+                        if (!u.getId().equals(usuario.getId())) {
+                            throw new DuplicateResourceException(
+                                    "Ya existe un usuario con el email: " + nuevoEmail
+                            );
+                        }
+                    });
+
+            usuario.setEmail(nuevoEmail);
+        }
+
+        if (usuarioEditDTO.celular() != null) {
+            usuario.setCelular(usuarioEditDTO.celular());
+        }
+
+        if (usuarioEditDTO.password() != null && !usuarioEditDTO.password().trim().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(usuarioEditDTO.password()));
+        }
+
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+        return toResponseDTO(usuarioActualizado);
     }
 
     // Realiza baja lógica sin eliminar físicamente el usuario
@@ -80,6 +125,7 @@ public class UsuarioService {
                 usuario.getNombre(),
                 usuario.getApellido(),
                 usuario.getEmail(),
+                usuario.getCelular(),
                 usuario.getRol()
         );
     }

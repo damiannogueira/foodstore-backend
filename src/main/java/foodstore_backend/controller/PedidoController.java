@@ -16,7 +16,7 @@ import java.util.List;
 
 // Controlador que expone endpoints para manejar pedidos
 @RestController
-@RequestMapping({"/api/orders"})
+@RequestMapping("/api/orders")
 public class PedidoController {
 
     @Autowired
@@ -24,8 +24,8 @@ public class PedidoController {
 
     @GetMapping
     public ResponseEntity<List<PedidoResponseDTO>> listarPedidos(
-            @RequestParam(required = false) EstadoPedido estado) {
-
+            @RequestParam(required = false) EstadoPedido estado
+    ) {
         if (estado != null) {
             return ResponseEntity.ok(pedidoService.listarPedidosPorEstado(estado));
         }
@@ -40,7 +40,8 @@ public class PedidoController {
 
     @PostMapping
     public ResponseEntity<PedidoResponseDTO> guardarPedido(
-            @Valid @RequestBody PedidoCreateDTO dto) {
+            @Valid @RequestBody PedidoCreateDTO dto
+    ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(pedidoService.guardarPedido(dto));
     }
@@ -48,7 +49,8 @@ public class PedidoController {
     @PutMapping("/{id}")
     public ResponseEntity<PedidoResponseDTO> actualizarPedido(
             @PathVariable Long id,
-            @Valid @RequestBody PedidoEditDTO dto) {
+            @Valid @RequestBody PedidoEditDTO dto
+    ) {
         return ResponseEntity.ok(pedidoService.actualizarPedido(id, dto));
     }
 
@@ -60,14 +62,16 @@ public class PedidoController {
 
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<PedidoResponseDTO>> listarPedidosPorUsuario(
-            @PathVariable Long usuarioId) {
+            @PathVariable Long usuarioId
+    ) {
         return ResponseEntity.ok(pedidoService.listarPedidosPorUsuario(usuarioId));
     }
 
     @PatchMapping({"/{id}/status", "/{id}/estado"})
     public ResponseEntity<PedidoResponseDTO> actualizarEstado(
             @PathVariable Long id,
-            @Valid @RequestBody EstadoPedidoDTO dto) {
-        return ResponseEntity.ok(pedidoService.actualizarEstado(id, dto.getEstado()));
+            @Valid @RequestBody EstadoPedidoDTO dto
+    ) {
+        return ResponseEntity.ok(pedidoService.actualizarEstado(id, dto.estado()));
     }
 }

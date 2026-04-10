@@ -28,6 +28,10 @@ public class Usuario extends Base {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
+    @Size(max = 20, message = "El celular no puede superar los 20 caracteres")
+    @Column(length = 20)
+    private String celular;
+
     @NotBlank(message = "La contraseña es obligatoria")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false)
@@ -41,10 +45,11 @@ public class Usuario extends Base {
     public Usuario() {
     }
 
-    public Usuario(String nombre, String apellido, String email, String password, Rol rol) {
+    public Usuario(String nombre, String apellido, String email, String celular, String password, Rol rol) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.email = email;
+        this.celular = celular;
         this.password = password;
         this.rol = rol;
     }
@@ -71,6 +76,14 @@ public class Usuario extends Base {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getCelular() {
+        return celular;
+    }
+
+    public void setCelular(String celular) {
+        this.celular = celular;
     }
 
     public String getPassword() {
