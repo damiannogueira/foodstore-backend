@@ -4,9 +4,11 @@ import foodstore_backend.dto.UsuarioCreateDTO;
 import foodstore_backend.dto.UsuarioResponseDTO;
 import foodstore_backend.exception.DuplicateResourceException;
 import foodstore_backend.model.Usuario;
+import foodstore_backend.model.enums.Rol;
 import foodstore_backend.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 // Tests unitarios para UsuarioService
 @ExtendWith(MockitoExtension.class)
@@ -53,16 +56,18 @@ class UsuarioServiceTest {
         usuarioGuardado.setApellido("Perez");
         usuarioGuardado.setEmail("juan@email.com");
         usuarioGuardado.setCelular("123456789");
+        usuarioGuardado.setRol(Rol.USUARIO);
 
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioGuardado);
 
-        UsuarioResponseDTO response = usuarioService.registrarUsuario(dto);
+        UsuarioResponseDTO response = usuarioService.crearUsuario(dto);
 
         assertNotNull(response);
         assertEquals("Juan", response.nombre());
         assertEquals("Perez", response.apellido());
         assertEquals("juan@email.com", response.email());
         assertEquals("123456789", response.celular());
+        assertEquals(Rol.USUARIO, response.rol());
     }
 
     @Test
@@ -83,9 +88,45 @@ class UsuarioServiceTest {
 
         DuplicateResourceException exception = assertThrows(
                 DuplicateResourceException.class,
-                () -> usuarioService.registrarUsuario(dto)
+                () -> usuarioService.crearUsuario(dto)
         );
 
         assertEquals("Ya existe un usuario con el email: juan@email.com", exception.getMessage());
+    }
+
+    @Test
+    void registrarUsuarioEncriptaPasswordYAsignaRolUsuario() {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO(
+                "Ana",
+                "Lopez",
+                "ana@email.com",
+                "3415550000",
+                "123456"
+        );
+
+        when(usuarioRepository.findByEmailAndEliminadoFalse("ana@email.com"))
+                .thenReturn(Optional.empty());
+
+        when(passwordEncoder.encode("123456")).thenReturn("hash-bcrypt");
+
+        Usuario usuarioGuardado = new Usuario();
+        usuarioGuardado.setNombre("Ana");
+        usuarioGuardado.setApellido("Lopez");
+        usuarioGuardado.setEmail("ana@email.com");
+        usuarioGuardado.setCelular("3415550000");
+        usuarioGuardado.setRol(Rol.USUARIO);
+
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioGuardado);
+
+        usuarioService.crearUsuario(dto);
+
+        // Capturo el usuario real enviado al save para verificar password y rol
+        ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepository).save(captor.capture());
+
+        Usuario usuarioEnviado = captor.getValue();
+
+        assertEquals("hash-bcrypt", usuarioEnviado.getPassword());
+        assertEquals(Rol.USUARIO, usuarioEnviado.getRol());
     }
 }

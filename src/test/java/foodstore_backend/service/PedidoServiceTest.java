@@ -54,11 +54,16 @@ class PedidoServiceTest {
         );
 
         Usuario usuario = new Usuario();
+        usuario.setId(1L);
+        usuario.setNombre("Damian");
+        usuario.setApellido("Nogueira");
 
         Producto producto = new Producto();
+        producto.setId(1L);
         producto.setNombre("Hamburguesa");
         producto.setPrecio(new BigDecimal("5000"));
         producto.setStock(5);
+        producto.setImagen("img.jpg");
         producto.setDisponible(true);
 
         when(usuarioService.buscarEntidadPorId(1L)).thenReturn(usuario);
@@ -69,7 +74,10 @@ class PedidoServiceTest {
                 () -> pedidoService.guardarPedido(dto)
         );
 
-        assertEquals("Stock insuficiente para el producto: Hamburguesa", exception.getMessage());
+        assertEquals(
+                "Stock insuficiente para 'Hamburguesa'. Disponible: 5, Solicitado: 10",
+                exception.getMessage()
+        );
     }
 
     @Test
@@ -86,10 +94,12 @@ class PedidoServiceTest {
         );
 
         Usuario usuario = new Usuario();
+        usuario.setId(1L);
         usuario.setNombre("Damian");
         usuario.setApellido("Nogueira");
 
         Producto producto = new Producto();
+        producto.setId(1L);
         producto.setNombre("Hamburguesa");
         producto.setPrecio(new BigDecimal("5000"));
         producto.setStock(10);
@@ -98,7 +108,6 @@ class PedidoServiceTest {
 
         when(usuarioService.buscarEntidadPorId(1L)).thenReturn(usuario);
         when(productoService.buscarPorId(1L)).thenReturn(producto);
-
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         PedidoResponseDTO response = pedidoService.guardarPedido(dto);
@@ -108,6 +117,7 @@ class PedidoServiceTest {
         assertEquals(FormaPago.EFECTIVO, response.formaPago());
         assertEquals("123456789", response.telefono());
         assertEquals("Calle 123", response.direccionEntrega());
+        assertEquals("Sin cebolla", response.notas());
         assertEquals(8, producto.getStock());
         assertEquals(1, response.detalles().size());
     }

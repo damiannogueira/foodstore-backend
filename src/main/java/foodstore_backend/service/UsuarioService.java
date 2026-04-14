@@ -50,7 +50,7 @@ public class UsuarioService {
     }
 
     // Registra un usuario nuevo con mail único y contraseña encriptada
-    public UsuarioResponseDTO registrarUsuario(UsuarioCreateDTO usuarioCreateDTO) {
+    public UsuarioResponseDTO crearUsuario(UsuarioCreateDTO usuarioCreateDTO) {
 
         usuarioRepository.findByEmailAndEliminadoFalse(usuarioCreateDTO.email())
                 .ifPresent(u -> {

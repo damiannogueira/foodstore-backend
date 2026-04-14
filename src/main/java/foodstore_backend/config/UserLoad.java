@@ -8,7 +8,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-// Crea un usuario administrador por defecto si no existe
+// Crea un usuario administrador por defecto si no existen usuarios
 @Component
 public class UserLoad implements CommandLineRunner {
 
@@ -20,17 +20,14 @@ public class UserLoad implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String adminEmail = "admin@admin.com";
 
-        boolean existeAdmin = usuarioRepository
-                .findByEmailAndEliminadoFalse(adminEmail)
-                .isPresent();
+        // Verifica si no hay usuarios en la base
+        if (usuarioRepository.count() == 0) {
 
-        if (!existeAdmin) {
             Usuario admin = new Usuario();
             admin.setNombre("Admin");
             admin.setApellido("Sistema");
-            admin.setEmail(adminEmail);
+            admin.setEmail("admin@admin.com");
             admin.setCelular("0000000000");
             admin.setPassword(passwordEncoder.encode("123456"));
             admin.setRol(Rol.ADMIN);
@@ -38,7 +35,7 @@ public class UserLoad implements CommandLineRunner {
 
             usuarioRepository.save(admin);
 
-            System.out.println("Administrador por defecto creado: " + adminEmail);
+            System.out.println("Administrador por defecto creado: admin@admin.com");
         }
     }
 }

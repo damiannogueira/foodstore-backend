@@ -4,49 +4,50 @@ import foodstore_backend.dto.CategoriaCreateDTO;
 import foodstore_backend.dto.CategoriaEditDTO;
 import foodstore_backend.dto.CategoriaResponseDTO;
 import foodstore_backend.service.CategoriaService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// Controlador que expone endpoints para manejar categorías
+// Controlador REST para manejar categorías
 @RestController
-@RequestMapping({"/api/categories"})
+@RequestMapping("/api/categories")
+@CrossOrigin(origins = "*")
 public class CategoriaController {
 
     @Autowired
     private CategoriaService categoriaService;
 
+    @Operation(summary = "Listar todas las categorías")
     @GetMapping
-    public ResponseEntity<List<CategoriaResponseDTO>> listarCategorias() {
-        return ResponseEntity.ok(categoriaService.listarCategorias());
+    public List<CategoriaResponseDTO> listarCategorias() {
+        return categoriaService.listarCategorias();
     }
 
+    @Operation(summary = "Obtener categoría por ID")
     @GetMapping("/{id}")
-    public ResponseEntity<CategoriaResponseDTO> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(categoriaService.obtenerPorId(id));
+    public CategoriaResponseDTO obtenerPorId(@PathVariable Long id) {
+        return categoriaService.obtenerPorId(id);
     }
 
+    @Operation(summary = "Crear una nueva categoría")
     @PostMapping
-    public ResponseEntity<CategoriaResponseDTO> guardarCategoria(
-            @Valid @RequestBody CategoriaCreateDTO categoriaCreateDTO) {
-        CategoriaResponseDTO categoriaGuardada = categoriaService.guardarCategoria(categoriaCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaGuardada);
+    public CategoriaResponseDTO guardarCategoria(@Valid @RequestBody CategoriaCreateDTO dto) {
+        return categoriaService.guardarCategoria(dto);
     }
 
+    @Operation(summary = "Actualizar categoría")
     @PutMapping("/{id}")
-    public ResponseEntity<CategoriaResponseDTO> actualizarCategoria(
-            @PathVariable Long id,
-            @Valid @RequestBody CategoriaEditDTO categoriaEditDTO) {
-        return ResponseEntity.ok(categoriaService.actualizarCategoria(id, categoriaEditDTO));
+    public CategoriaResponseDTO actualizarCategoria(@PathVariable Long id,
+                                                    @RequestBody CategoriaEditDTO dto) {
+        return categoriaService.actualizarCategoria(id, dto);
     }
 
+    @Operation(summary = "Eliminar categoría (soft delete)")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarCategoria(@PathVariable Long id) {
+    public void eliminarCategoria(@PathVariable Long id) {
         categoriaService.eliminarCategoria(id);
-        return ResponseEntity.noContent().build();
     }
 }

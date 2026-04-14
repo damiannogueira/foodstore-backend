@@ -1,21 +1,20 @@
-# 🛒 FoodStore Backend
+🛒 FoodStore Backend
 
 Backend desarrollado en Java con Spring Boot para la gestión de una tienda online.
 
 Permite administrar usuarios, categorías, productos y pedidos, incluyendo lógica de negocio real como cálculo de totales, validación de stock y gestión de estados.
 
----
-
-## 🚀 Tecnologías utilizadas
-
-* Java 17+
-* Spring Boot
-* Spring Data JPA
-* Hibernate
-* MySQL
-* Maven
+🚀 Tecnologías utilizadas
+Java 17+
+Spring Boot
+Spring Data JPA
+Hibernate
+MySQL
+Maven
 
 ---
+
+📁 Estructura del proyecto
 ```
 foodstore-backend
 │
@@ -26,231 +25,221 @@ foodstore-backend
 │   ├── model           # Entidades
 │   ├── dto             # Objetos de transferencia
 │   ├── exception       # Manejo global de errores
-│   └── config          # Configuraciones
+│   └── config          # Configuraciones (UserLoad, etc.)
 │
 ├── src/main/resources
-│   ├── application.properties
+│   ├── application-example.properties
+│
+├── .mvn/               # Maven Wrapper
+├── mvnw
+├── mvnw.cmd
 │
 └── pom.xml
 ```
 ---
 
-## 📦 Funcionalidades
+📦 Funcionalidades
 
-### 👤 Usuarios
+👤 Usuarios
+Registro (/api/auth/register)
+Login (/api/auth/login)
+Validación de datos
+Email único
+Contraseña encriptada con BCrypt
+Soft delete (baja lógica)
+Ocultamiento de contraseña en respuestas
 
-* Registro de usuarios (`/api/auth/register`)
-* Login (`/api/auth/login`)
-* Validación de datos
-* Email único
-* Contraseña encriptada con SHA-256
-* Ocultamiento de contraseña en respuestas
+📂 Categorías
+CRUD completo (/api/categories)
+Validaciones de datos
+Control de duplicados
+Soft delete (baja lógica)
 
----
+🛍️ Productos
+CRUD completo (/api/products)
+Relación con categoría
+Validaciones:
+precio > 0
+stock >= 0
+imagen válida
+Campo disponible
+Filtros:
+productos disponibles
+productos por categoría
+Soft delete
 
-### 📂 Categorías
-
-* CRUD completo (`/api/categories`)
-* Validaciones de nombre, descripción e imagen
-* Control de duplicados
-* Soft delete (baja lógica)
-
----
-
-### 🛍️ Productos
-
-* CRUD completo (`/api/products`)
-* Relación con categoría
-* Validación de:
-
-  * precio > 0
-  * stock >= 0
-  * imagen válida
-* Campo `disponible` para control de venta
-* Filtros:
-
-  * productos disponibles
-  * productos por categoría
-* Soft delete
-
----
-
-### 🧾 Pedidos
-
-* Creación de pedidos (`/api/orders`)
-* Validaciones:
-
-  * usuario existente
-  * al menos un producto
-  * producto disponible
-  * stock suficiente
-* Cálculo automático de:
-
-  * subtotales
-  * total del pedido
-* Descuento automático de stock
-* Manejo transaccional (`@Transactional`)
-* Estados del pedido:
-
-  * PENDIENTE
-  * CONFIRMADO
-  * CANCELADO
-  * ENTREGADO
-* Actualización de estado:
-
-  * `PATCH /api/orders/{id}/status`
-* Listados:
-
-  * todos los pedidos
-  * por usuario
-  * por estado
+🧾 Pedidos
+Creación (/api/orders)
+Validaciones:
+usuario existente
+productos válidos
+stock suficiente
+Cálculo automático de totales
+Descuento de stock
+Manejo transaccional (@Transactional)
+Estados del pedido:
+PENDIENTE
+CONFIRMADO
+EN_PREPARACION
+ENVIADO
+ENTREGADO
+TERMINADO
+CANCELADO
+Cambio de estado:
+PATCH /api/orders/{id}/status
+Listados:
+todos
+por usuario
+por estado
 
 ---
 
-## 🛠️ Configuración del proyecto
+⚙️ Configuración del proyecto
+Requisitos
+Java 17 o superior
+MySQL
+No es necesario tener Maven instalado (se usa Maven Wrapper)
+🔧 Configuración de base de datos
 
-### Requisitos
+Por seguridad, el archivo application.properties no se incluye en el repositorio.
 
-* Java 17 o superior
-* MySQL
-* Maven
+Se provee un archivo de ejemplo:
 
-### Base de datos
+application-example.properties
 
-1. Crear una base de datos en MySQL:
+Pasos:
 
-```sql
-CREATE DATABASE food_store;
-```
-
-2. Configurar el archivo `application.properties`:
-
-```properties
+Copiar el archivo:
+cp application-example.properties application.properties
+Completar credenciales:
 spring.datasource.url=jdbc:mysql://localhost:3306/food_store
 spring.datasource.username=TU_USUARIO
 spring.datasource.password=TU_PASSWORD
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-```
+Crear base de datos:
+CREATE DATABASE food_store;
 
 ---
 
-## ▶️ Ejecución
+👑 Usuario administrador por defecto
 
-Desde la raíz del proyecto:
+Se crea automáticamente al iniciar la aplicación si no existe:
 
-```
-mvn spring-boot:run
-```
+Email: admin@admin.com
+Password: 123456
 
 ---
 
-## 📄 Documentación API
+▶️ Ejecución
 
-Swagger disponible en:
+Usando Maven Wrapper:
 
-```
+.\mvnw.cmd spring-boot:run
+
+---
+
+📄 Documentación API
+
+Swagger:
+
 http://localhost:8080/swagger-ui/index.html
-```
 
 ---
 
-## 🔗 Endpoints principales
+🔗 Endpoints principales
 
-### Auth
+Auth
+POST /api/auth/register
+POST /api/auth/login
 
-* `POST /api/auth/register`
-* `POST /api/auth/login`
+Categorías
+GET /api/categories
+GET /api/categories/{id}
+POST /api/categories
+PUT /api/categories/{id}
+DELETE /api/categories/{id}
 
-### Categorías
+Productos
+GET /api/products
+GET /api/products/available
+GET /api/products/{id}
+POST /api/products
+PUT /api/products/{id}
+DELETE /api/products/{id}
+GET /api/products/categoria/{id}
 
-* `GET /api/categories`
-* `GET /api/categories/{id}`
-* `POST /api/categories`
-* `PUT /api/categories/{id}`
-* `DELETE /api/categories/{id}`
-
-### Productos
-
-* `GET /api/products`
-* `GET /api/products/available`
-* `GET /api/products/{id}`
-* `POST /api/products`
-* `PUT /api/products/{id}`
-* `DELETE /api/products/{id}`
-* `GET /api/products/category/{id}`
-
-### Pedidos
-
-* `GET /api/orders`
-* `GET /api/orders/{id}`
-* `GET /api/orders/usuario/{id}`
-* `GET /api/orders?estado=PENDIENTE`
-* `POST /api/orders`
-* `PUT /api/orders/{id}`
-* `DELETE /api/orders/{id}`
-* `PATCH /api/orders/{id}/status`
+Pedidos
+GET /api/orders
+GET /api/orders/{id}
+GET /api/orders/usuario/{id}
+GET /api/orders?estado=PENDIENTE
+POST /api/orders
+PUT /api/orders/{id}
+DELETE /api/orders/{id}
+PATCH /api/orders/{id}/status
 
 ---
 
-## ⚙️ Características técnicas
-
-* Arquitectura en capas:
-
-  * Controller
-  * Service
-  * Repository
-* Uso de DTOs para entrada/salida
-* Validaciones con Jakarta Validation (`@Valid`)
-* Manejo global de excepciones (`@ControllerAdvice`)
-* Soft delete en todas las entidades
-* Transacciones en operaciones críticas
-* API RESTful siguiendo buenas prácticas
+⚙️ Características técnicas
+Arquitectura en capas (Controller / Service / Repository)
+Uso de DTOs con Java Records
+Validaciones con Jakarta Validation
+Manejo global de excepciones
+Soft delete en todas las entidades
+Transacciones en operaciones críticas
+API RESTful (status codes, DTOs, validaciones)
+Encriptación de contraseñas con BCrypt
+Maven Wrapper (ejecución sin instalar Maven)
 
 ---
 
-## 🧪 Pruebas recomendadas
+🧪 Pruebas
 
-Se recomienda probar con Swagger o herramientas como Postman/Thunder Client:
+El proyecto incluye:
 
-* Registro y login de usuario
-* CRUD de categorías y productos
-* Creación de pedidos válidos
-* Casos de error:
+Tests unitarios (Service) con JUnit y Mockito
+Tests de integración (Controller) con MockMvc
+Aislamiento de datos en tests (limpieza de base de datos para evitar conflictos de FK)
 
-  * producto no disponible
-  * stock insuficiente
-  * datos inválidos
+Casos cubiertos:
 
----
-
-## 🎥 Video demostrativo
-
-👉 [AGREGAR LINK DEL VIDEO]
+Login correcto e incorrecto
+Duplicados (usuarios, categorías, productos)
+Soft delete
+Validaciones de negocio
+Flujo completo de pedidos
 
 ---
 
-## 📄 Documentación (PDF)
+🎥 Video demostrativo
 
-👉 [AGREGAR LINK O ARCHIVO PDF]
-
----
-
-## 👨‍💻 Autor
-
-Damián Nogueira
+ [AGREGAR LINK DEL VIDEO]
 
 ---
 
-## 📌 Notas finales
+📄 Documentación (PDF)
 
-Este proyecto fue desarrollado como trabajo práctico integrador de la materia Programación 3 de la carrera de Programación de la UTN, aplicando conceptos de:
-
-* API REST
-* Persistencia con JPA/Hibernate
-* Validaciones de negocio
-* Manejo de errores
-* Arquitectura backend en Java
+[AGREGAR LINK O ARCHIVO PDF]
 
 ---
+
+👨‍💻 Autor
+
+Damián Ignacio Nogueira
+Estudiante TUPaD - UTN
+
+---
+
+📌 Notas finales
+
+Este proyecto fue desarrollado como trabajo práctico integrador de Programación 3.
+
+Incluye:
+
+API REST completa
+Persistencia con JPA/Hibernate
+Validaciones de negocio reales
+Control de stock y estados de pedidos
+Seguridad básica (BCrypt)
+Testing unitario e integración
+
+El sistema simula el funcionamiento real de un backend de e-commerce, aplicando buenas prácticas de desarrollo backend.

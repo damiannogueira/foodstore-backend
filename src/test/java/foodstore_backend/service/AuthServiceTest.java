@@ -2,6 +2,7 @@ package foodstore_backend.service;
 
 import foodstore_backend.dto.LoginRequestDTO;
 import foodstore_backend.dto.LoginResponseDTO;
+import foodstore_backend.exception.ResourceNotFoundException;
 import foodstore_backend.model.Usuario;
 import foodstore_backend.model.enums.Rol;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,7 @@ class AuthServiceTest {
 
     @Test
     void loginExitoso() {
+        // Simulo que el usuario existe y que la password coincide
         when(usuarioService.buscarEntidadPorEmail("damian@email.com")).thenReturn(usuario);
         when(passwordEncoder.matches("123456", "hash")).thenReturn(true);
 
@@ -62,6 +64,7 @@ class AuthServiceTest {
 
     @Test
     void loginConPasswordIncorrecta() {
+        // Simulo que el usuario existe pero la password no coincide
         when(usuarioService.buscarEntidadPorEmail("damian@email.com")).thenReturn(usuario);
         when(passwordEncoder.matches("123456", "hash")).thenReturn(false);
 
@@ -71,5 +74,19 @@ class AuthServiceTest {
         );
 
         assertEquals("Credenciales inválidas", exception.getMessage());
+    }
+
+    @Test
+    void loginConUsuarioInexistente() {
+        // Simulo que no existe ningún usuario con ese email
+        when(usuarioService.buscarEntidadPorEmail("damian@email.com"))
+                .thenThrow(new ResourceNotFoundException("Usuario no encontrado con email: damian@email.com"));
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> authService.login(loginRequestDTO)
+        );
+
+        assertEquals("Usuario no encontrado con email: damian@email.com", exception.getMessage());
     }
 }

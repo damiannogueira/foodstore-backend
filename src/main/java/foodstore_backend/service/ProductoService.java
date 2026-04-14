@@ -31,7 +31,8 @@ public class ProductoService {
                 .toList();
     }
 
-    public List<ProductoResponseDTO> listarProductosDisponibles() {
+    // Devuelve solo los productos disponibles
+    public List<ProductoResponseDTO> listarDisponibles() {
         return productoRepository.findByDisponibleTrueAndEliminadoFalse()
                 .stream()
                 .map(this::toResponseDTO)
@@ -130,7 +131,8 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
-    public List<ProductoResponseDTO> listarProductosPorCategoria(Long categoriaId) {
+    // Devuelve los productos de una categoría
+    public List<ProductoResponseDTO> listarPorCategoria(Long categoriaId) {
         categoriaService.buscarPorId(categoriaId);
 
         return productoRepository.findByCategoriaIdAndEliminadoFalse(categoriaId)

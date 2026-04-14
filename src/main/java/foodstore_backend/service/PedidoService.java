@@ -36,29 +36,33 @@ public class PedidoService {
     @Autowired
     private ProductoService productoService;
 
+    // Devuelve todos los pedidos activos
     public List<PedidoResponseDTO> listarPedidos() {
-        return pedidoRepository.findAllByEliminadoFalse()
+        return pedidoRepository.findByEliminadoFalseOrderByFechaDesc()
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
 
+    // Devuelve los pedidos activos de un usuario
     public List<PedidoResponseDTO> listarPedidosPorUsuario(Long usuarioId) {
         usuarioService.buscarEntidadPorId(usuarioId);
 
-        return pedidoRepository.findByUsuarioIdAndEliminadoFalse(usuarioId)
+        return pedidoRepository.findByUsuarioIdAndEliminadoFalseOrderByFechaDesc(usuarioId)
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
 
+    // Devuelve los pedidos activos filtrados por estado
     public List<PedidoResponseDTO> listarPedidosPorEstado(EstadoPedido estado) {
-        return pedidoRepository.findByEstadoAndEliminadoFalse(estado)
+        return pedidoRepository.findByEstadoAndEliminadoFalseOrderByFechaDesc(estado)
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
 
+    // Busca un pedido activo por id o lanza excepción si no existe
     public Pedido buscarPorId(Long id) {
         return pedidoRepository.findByIdAndEliminadoFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -66,18 +70,26 @@ public class PedidoService {
                 ));
     }
 
+    // Obtiene un pedido activo por id y lo convierte a DTO de respuesta
     public PedidoResponseDTO obtenerPorId(Long id) {
         return toResponseDTO(buscarPorId(id));
     }
 
+    // Guarda un nuevo pedido, valida stock y descuenta unidades
     @Transactional
     public PedidoResponseDTO guardarPedido(PedidoCreateDTO dto) {
 
-        Usuario usuario = usuarioService.buscarEntidadPorId(dto.usuarioId());
+        // Validación defensiva por si llega una lista vacía al service
+        if (dto.detalles() == null || dto.detalles().isEmpty()) {
+            throw new IllegalArgumentException("El pedido debe tener al menos un detalle");
+        }
+
+        Usuario usuario = usuarioService.buscarEntidadPorId(dto.idUsuario());
 
         List<Producto> productosValidados = new ArrayList<>();
         List<PedidoDetalleCreateDTO> items = dto.detalles();
 
+        // Primero validamos todos los productos antes de descontar stock
         for (PedidoDetalleCreateDTO item : items) {
             Producto producto = productoService.buscarPorId(item.productoId());
 
@@ -89,7 +101,9 @@ public class PedidoService {
 
             if (producto.getStock() < item.cantidad()) {
                 throw new InsufficientStockException(
-                        "Stock insuficiente para el producto: " + producto.getNombre()
+                        "Stock insuficiente para '" + producto.getNombre()
+                                + "'. Disponible: " + producto.getStock()
+                                + ", Solicitado: " + item.cantidad()
                 );
             }
 
@@ -103,11 +117,12 @@ public class PedidoService {
         pedido.setFormaPago(dto.formaPago());
         pedido.setTelefono(dto.telefono().trim());
         pedido.setDireccionEntrega(dto.direccionEntrega().trim());
-        pedido.setNotas(dto.notas() != null ? dto.notas().trim() : null);
+        pedido.setNotas(dto.notas() != null && !dto.notas().trim().isEmpty() ? dto.notas().trim() : null);
         pedido.setEliminado(false);
 
         BigDecimal total = BigDecimal.ZERO;
 
+        // Creamos detalles, calculamos subtotales y recién ahí descontamos stock
         for (int i = 0; i < items.size(); i++) {
             PedidoDetalleCreateDTO item = items.get(i);
             Producto producto = productosValidados.get(i);
@@ -135,6 +150,7 @@ public class PedidoService {
         return toResponseDTO(guardado);
     }
 
+    // Actualiza parcialmente estado y/o forma de pago
     @Transactional
     public PedidoResponseDTO actualizarPedido(Long id, PedidoEditDTO dto) {
         Pedido pedido = buscarPorId(id);
@@ -151,6 +167,7 @@ public class PedidoService {
         return toResponseDTO(pedidoActualizado);
     }
 
+    // Actualiza solo el estado del pedido
     @Transactional
     public PedidoResponseDTO actualizarEstado(Long id, EstadoPedido nuevoEstado) {
         Pedido pedido = buscarPorId(id);
@@ -158,6 +175,7 @@ public class PedidoService {
         return toResponseDTO(pedidoRepository.save(pedido));
     }
 
+    // Realiza soft delete del pedido
     @Transactional
     public void eliminarPedido(Long id) {
         Pedido pedido = buscarPorId(id);
@@ -165,6 +183,7 @@ public class PedidoService {
         pedidoRepository.save(pedido);
     }
 
+    // Convierte la entidad Pedido a DTO de respuesta
     private PedidoResponseDTO toResponseDTO(Pedido pedido) {
 
         List<DetallePedidoResponseDTO> detalles = pedido.getDetalles()

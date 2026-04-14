@@ -2,17 +2,20 @@ package foodstore_backend.repository;
 
 import foodstore_backend.model.Pedido;
 import foodstore_backend.model.enums.EstadoPedido;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
-// Repositorio para acceder a los datos de pedidos
 @Repository
-public interface PedidoRepository extends BaseRepository<Pedido, Long> {
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
-    List<Pedido> findByEliminadoFalse();
+    Optional<Pedido> findByIdAndEliminadoFalse(Long id);
 
-    List<Pedido> findByUsuarioIdAndEliminadoFalse(Long usuarioId);
+    List<Pedido> findByEliminadoFalseOrderByFechaDesc();
 
-    List<Pedido> findByEstadoAndEliminadoFalse(EstadoPedido estado);
+    List<Pedido> findByUsuarioIdAndEliminadoFalseOrderByFechaDesc(Long usuarioId);
+
+    List<Pedido> findByEstadoAndEliminadoFalseOrderByFechaDesc(EstadoPedido estado);
 }

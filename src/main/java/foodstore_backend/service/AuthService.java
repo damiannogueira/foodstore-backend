@@ -41,7 +41,7 @@ public class AuthService {
     // Registra un nuevo usuario cliente y devuelve una respuesta equivalente al login
     public LoginResponseDTO register(UsuarioCreateDTO dto) {
 
-        UsuarioResponseDTO usuarioCreado = usuarioService.registrarUsuario(dto);
+        UsuarioResponseDTO usuarioCreado = usuarioService.crearUsuario(dto);
 
         return new LoginResponseDTO(
                 usuarioCreado.id(),

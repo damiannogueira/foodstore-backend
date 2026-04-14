@@ -2,8 +2,9 @@ package foodstore_backend.dto;
 
 import foodstore_backend.model.enums.FormaPago;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -11,22 +12,22 @@ import java.util.List;
 public record PedidoCreateDTO(
 
         @NotNull(message = "El usuario es obligatorio")
-        Long usuarioId,
+        Long idUsuario,
 
         @NotNull(message = "La forma de pago es obligatoria")
         FormaPago formaPago,
 
-        @NotNull(message = "El teléfono es obligatorio")
+        @NotBlank(message = "El teléfono es obligatorio")
         String telefono,
 
-        @NotNull(message = "La dirección es obligatoria")
+        @NotBlank(message = "La dirección de entrega es obligatoria")
         String direccionEntrega,
 
-        @Size(max = 500)
+        // Campo opcional para observaciones del cliente (ej: sin cebolla o sin mayonesa, llamar al llegar, etc.)
         String notas,
 
+        @NotEmpty(message = "El pedido debe tener al menos un detalle")
         @Valid
-        @NotNull(message = "Los detalles son obligatorios")
         List<PedidoDetalleCreateDTO> detalles
 
 ) {
