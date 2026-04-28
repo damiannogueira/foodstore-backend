@@ -7,6 +7,8 @@ import foodstore_backend.service.ProductoService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,14 +48,15 @@ public class ProductoController {
 
     @Operation(summary = "Crear un nuevo producto")
     @PostMapping
-    public ProductoResponseDTO guardarProducto(@Valid @RequestBody ProductoCreateDTO dto) {
-        return productoService.guardarProducto(dto);
+    public ResponseEntity<ProductoResponseDTO> guardarProducto(@Valid @RequestBody ProductoCreateDTO dto) {
+        // Devuelve 201 Created porque se crea un nuevo producto
+        return ResponseEntity.status(HttpStatus.CREATED).body(productoService.guardarProducto(dto));
     }
 
     @Operation(summary = "Actualizar producto")
     @PutMapping("/{id}")
-    public ProductoResponseDTO actualizarProducto(@PathVariable Long id,
-                                                  @RequestBody ProductoEditDTO dto) {
+    public ProductoResponseDTO actualizarProducto(@PathVariable Long id, @Valid @RequestBody ProductoEditDTO dto) {
+        // Con @Valid aseguro que se validen los datos antes de actualizar
         return productoService.actualizarProducto(id, dto);
     }
 

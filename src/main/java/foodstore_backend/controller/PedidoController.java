@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -47,14 +49,15 @@ public class PedidoController {
 
     @Operation(summary = "Crear un nuevo pedido")
     @PostMapping
-    public PedidoResponseDTO guardarPedido(@Valid @RequestBody PedidoCreateDTO dto) {
-        return pedidoService.guardarPedido(dto);
+    public ResponseEntity<PedidoResponseDTO> guardarPedido(@Valid @RequestBody PedidoCreateDTO dto) {
+        // Devuelve 201 Created porque se genera un nuevo pedido
+        return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.guardarPedido(dto));
     }
 
     @Operation(summary = "Actualizar pedido (estado o forma de pago)")
     @PutMapping("/{id}")
-    public PedidoResponseDTO actualizarPedido(@PathVariable Long id,
-                                              @RequestBody PedidoEditDTO dto) {
+    public PedidoResponseDTO actualizarPedido(@PathVariable Long id, @Valid @RequestBody PedidoEditDTO dto) {
+        // COn @Valid aseguro que se validen los datos antes de actualizar
         return pedidoService.actualizarPedido(id, dto);
     }
 
@@ -67,7 +70,9 @@ public class PedidoController {
 
     @Operation(summary = "Eliminar pedido (soft delete)")
     @DeleteMapping("/{id}")
-    public void eliminarPedido(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarPedido(@PathVariable Long id) {
         pedidoService.eliminarPedido(id);
+        // Aunque sea soft delete, el recurso ya no está disponible para el cliente
+        return ResponseEntity.noContent().build(); // Acá devuelve un 204 No Content
     }
 }

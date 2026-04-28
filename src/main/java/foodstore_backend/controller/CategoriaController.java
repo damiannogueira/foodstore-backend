@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -34,14 +36,15 @@ public class CategoriaController {
 
     @Operation(summary = "Crear una nueva categoría")
     @PostMapping
-    public CategoriaResponseDTO guardarCategoria(@Valid @RequestBody CategoriaCreateDTO dto) {
-        return categoriaService.guardarCategoria(dto);
+    public ResponseEntity<CategoriaResponseDTO> guardarCategoria(@Valid @RequestBody CategoriaCreateDTO dto) {
+        // Devuelve 201 Created porque se crea un nuevo recurso
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.guardarCategoria(dto));
     }
 
     @Operation(summary = "Actualizar categoría")
     @PutMapping("/{id}")
-    public CategoriaResponseDTO actualizarCategoria(@PathVariable Long id,
-                                                    @RequestBody CategoriaEditDTO dto) {
+    public CategoriaResponseDTO actualizarCategoria(@PathVariable Long id, @Valid @RequestBody CategoriaEditDTO dto) {
+        // Con @Valid aseguro que se validen los datos antes de actualizar
         return categoriaService.actualizarCategoria(id, dto);
     }
 

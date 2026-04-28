@@ -16,7 +16,7 @@ public record ProductoCreateDTO(
         String nombre,
 
         @NotBlank(message = "La descripción es obligatoria")
-        @Size(max = 500, message = "La descripción no puede exceder 500 caracteres")
+        @Size(min = 2, max = 500, message = "La descripción debe tener entre 2 y 500 caracteres")
         String descripcion,
 
         @NotNull(message = "El precio es obligatorio")

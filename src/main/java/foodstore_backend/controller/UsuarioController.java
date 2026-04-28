@@ -6,7 +6,11 @@ import foodstore_backend.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -33,8 +37,8 @@ public class UsuarioController {
 
     @Operation(summary = "Registrar nuevo usuario")
     @PostMapping
-    public UsuarioResponseDTO crearUsuario(@Valid @RequestBody UsuarioCreateDTO dto) {
-        return usuarioService.crearUsuario(dto);
+    public ResponseEntity<UsuarioResponseDTO> crearUsuario(@Valid @RequestBody UsuarioCreateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crearUsuario(dto));
     }
 
     @Operation(summary = "Eliminar usuario (soft delete)")
