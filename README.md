@@ -150,6 +150,23 @@ Se crea automáticamente al iniciar la aplicación si no existe:
 
 ---
 
+## 📊 Datos iniciales (Seeder)
+
+El sistema incluye carga automática de datos para facilitar las pruebas:
+
+### 🔹 UserLoad
+Crea un usuario administrador por defecto si no existe.
+
+### 🔹 DataSeeder
+Carga automáticamente:
+
+- Categorías iniciales (Pizzas, Hamburguesas, Bebidas, etc.)
+- Productos asociados a cada categoría
+
+Esto permite probar el catálogo sin necesidad de cargar datos manualmente.
+
+---
+
 ## ▶️ Ejecución
 
 Usando Maven Wrapper:
@@ -212,7 +229,7 @@ http://localhost:8080/swagger-ui/index.html
 * API RESTful (status codes, DTOs, validaciones)
 * Encriptación de contraseñas con BCrypt
 * Maven Wrapper (ejecución sin instalar Maven)
-
+* Configuración global de CORS para permitir integración con frontend (Vite)
 ---
 
 ## 🧪 Pruebas
