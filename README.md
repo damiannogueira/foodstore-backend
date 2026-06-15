@@ -211,7 +211,7 @@ http://localhost:8080/swagger-ui/index.html
 * GET `/api/orders`
 * GET `/api/orders/{id}`
 * GET `/api/orders/usuario/{id}`
-* GET `/api/orders?estado=PENDIENTE
+* GET `/api/orders?estado=PENDIENTE`
 * POST `/api/orders`
 * PUT `/api/orders/{id}`
 * DELETE `/api/orders/{id}`
@@ -252,13 +252,15 @@ http://localhost:8080/swagger-ui/index.html
 
 ## 🎥 Video demostrativo
 
- * [AGREGAR LINK DEL VIDEO]
+ * [LINK DEL VIDEO (https://www.youtube.com/watch?v=6TnlF89yvPg)]
 
 ---
 
 ## 📄 Documentación (PDF)
 
-* [AGREGAR LINK O ARCHIVO PDF]
+* [Informe TPI (docs/TPI-Programación-3.pdf)]
+
+* [Link de acceso a repositorio GitHub (https://github.com/damiannogueira/foodstore-backend.git)]
 
 ---
 
